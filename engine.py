@@ -1,1 +1,1 @@
-# initialise equity score and implement a class solely for Nash equilibrium calculations
+# initialise equity score and implement a class solely for Nash equilibrium calculationsrename
