@@ -14,10 +14,6 @@ warnings.filterwarnings('ignore')
 
 # DataEngine is a class for orchestrating the math and game theory analysis 
 
-from datacleanse import DataCleaner
-import pandas as pd
-import numpy as np
-
 class DataEngine(DataCleaner):
     def __init__(self, data_source):
         super().__init__(data_source)
@@ -28,4 +24,6 @@ class DataEngine(DataCleaner):
 
     def run_game_theory(self):
         # Placeholder for your nashpy logic
-        pass
+        pass 
+    
+    # Future function holding json object

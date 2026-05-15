@@ -1,6 +1,6 @@
 # DSR ENERGY x CURRENCY CASE STUDY
 
-DS / ML final project. Emphasis on API maintenance and ETL, Exploratory Data Analysis and and Machine Learning Prediction.
+DS / ML project. Emphasis on API maintenance and ETL, Exploratory Data Analysis and and Machine Learning Prediction.
 
 QUESTION: To what extent is the Digital Silk Road going to drive trilateral energy equity (Electricity and Solar Energy) and consumer spending and currency stability in households by 2030?
 
