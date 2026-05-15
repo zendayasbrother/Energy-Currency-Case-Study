@@ -16,4 +16,8 @@ warnings.filterwarnings('ignore')
 class DataEngine:
     def __init__(self, df):
         super().__init__(self, data_source=None)
-        self.df = df
+        self.df = df 
+        
+    def run_analysis(self):
+        # Placeholder for future analysis methods
+        pass
