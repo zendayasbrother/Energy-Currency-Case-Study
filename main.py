@@ -3,6 +3,7 @@ import numpy as np
 import wbgapi as wb
 from sklearn.linear_model import LinearRegression 
 from datacleanse import DataCleaner
+from engine import DataEngine
 
 if __name__ == "__main__":
     print("Initializing API fetch for Trilateral Analysis...")
