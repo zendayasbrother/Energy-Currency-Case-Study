@@ -1,0 +1,200 @@
+{
+    "metadata": {
+        "source": "Trilateral_API_Merge",
+        "rows": 32
+    },
+    "cleaned_data": [
+        {
+            "year": 2010,
+            "economy": "GHA",
+            "electricity_access": 64.2,
+            "gdp": 32.1976555665347
+        },
+        {
+            "year": 2011,
+            "economy": "GHA",
+            "electricity_access": 64.1,
+            "gdp": 39.336668080559
+        },
+        {
+            "year": 2012,
+            "economy": "GHA",
+            "electricity_access": 56.5,
+            "gdp": 41.271701060954
+        },
+        {
+            "year": 2013,
+            "economy": "GHA",
+            "electricity_access": 70.7,
+            "gdp": 62.845721959827
+        },
+        {
+            "year": 2014,
+            "economy": "GHA",
+            "electricity_access": 78.3,
+            "gdp": 54.678533805906405
+        },
+        {
+            "year": 2015,
+            "economy": "GHA",
+            "electricity_access": 74.0,
+            "gdp": 49.4368062304839
+        },
+        {
+            "year": 2016,
+            "economy": "GHA",
+            "electricity_access": 79.3,
+            "gdp": 56.1441793978516
+        },
+        {
+            "year": 2017,
+            "economy": "GHA",
+            "electricity_access": 79.0,
+            "gdp": 60.3854094348567
+        },
+        {
+            "year": 2018,
+            "economy": "GHA",
+            "electricity_access": 80.4,
+            "gdp": 67.25935396560871
+        },
+        {
+            "year": 2019,
+            "economy": "GHA",
+            "electricity_access": 83.5,
+            "gdp": 68.3526292461555
+        },
+        {
+            "year": 2020,
+            "economy": "GHA",
+            "electricity_access": 85.4,
+            "gdp": 70.0082438598666
+        },
+        {
+            "year": 2021,
+            "economy": "GHA",
+            "electricity_access": 86.3,
+            "gdp": 79.5142047303979
+        },
+        {
+            "year": 2022,
+            "economy": "GHA",
+            "electricity_access": 85.1,
+            "gdp": 73.9190032099866
+        },
+        {
+            "year": 2023,
+            "economy": "GHA",
+            "electricity_access": 89.5,
+            "gdp": 80.5471468783843
+        },
+        {
+            "year": 2024,
+            "economy": "GHA",
+            "electricity_access": 74.492881730078,
+            "gdp": 82.3081103864641
+        },
+        {
+            "year": 2025,
+            "economy": "GHA",
+            "electricity_access": 67.54104789152369,
+            "gdp": 252.261880141151
+        },
+        {
+            "year": 2010,
+            "economy": "NGA",
+            "electricity_access": 48.0,
+            "gdp": 366.99041712904
+        },
+        {
+            "year": 2011,
+            "economy": "NGA",
+            "electricity_access": 55.9,
+            "gdp": 414.46667683116
+        },
+        {
+            "year": 2012,
+            "economy": "NGA",
+            "electricity_access": 53.0,
+            "gdp": 463.971018239281
+        },
+        {
+            "year": 2013,
+            "economy": "NGA",
+            "electricity_access": 55.6,
+            "gdp": 520.117180313906
+        },
+        {
+            "year": 2014,
+            "economy": "NGA",
+            "electricity_access": 54.2,
+            "gdp": 574.183763411508
+        },
+        {
+            "year": 2015,
+            "economy": "NGA",
+            "electricity_access": 52.5,
+            "gdp": 493.02668280063
+        },
+        {
+            "year": 2016,
+            "economy": "NGA",
+            "electricity_access": 59.3,
+            "gdp": 404.64912525216
+        },
+        {
+            "year": 2017,
+            "economy": "NGA",
+            "electricity_access": 54.4,
+            "gdp": 375.745731053427
+        },
+        {
+            "year": 2018,
+            "economy": "NGA",
+            "electricity_access": 56.5,
+            "gdp": 421.73925150908
+        },
+        {
+            "year": 2019,
+            "economy": "NGA",
+            "electricity_access": 55.4,
+            "gdp": 668.219992691462
+        },
+        {
+            "year": 2020,
+            "economy": "NGA",
+            "electricity_access": 55.4,
+            "gdp": 598.586817819073
+        },
+        {
+            "year": 2021,
+            "economy": "NGA",
+            "electricity_access": 59.5,
+            "gdp": 609.147716972859
+        },
+        {
+            "year": 2022,
+            "economy": "NGA",
+            "electricity_access": 60.5,
+            "gdp": 646.950257577814
+        },
+        {
+            "year": 2023,
+            "economy": "NGA",
+            "electricity_access": 61.2,
+            "gdp": 487.387801880597
+        },
+        {
+            "year": 2024,
+            "economy": "NGA",
+            "electricity_access": 67.54104789152369,
+            "gdp": 252.261880141151
+        },
+        {
+            "year": 2025,
+            "economy": "NGA",
+            "electricity_access": 67.54104789152369,
+            "gdp": 252.261880141151
+        }
+    ]
+}
