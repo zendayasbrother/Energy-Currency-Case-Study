@@ -31,7 +31,7 @@ if __name__ == "__main__":
     full_report = cleaned_df.sort_values(['economy', 'year'])
     
     # Helper for 4-digit total constraint (e.g. 32.19, 366.9, 252.2)
-    gdp_fmt = lambda x: f"{float(f'{x:.4g}'):g}"
+    gdp_fmt = cleaner.formatter()
 
     for eco in full_report['economy'].unique():
         print(f"\n{'='*20} ECONOMY: {eco} (PROCESSED) {'='*20}")
