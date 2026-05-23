@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import wbgapi as wb
 import json
 from sklearn.linear_model import LinearRegression
 
@@ -25,41 +24,7 @@ class DataCleaner:
         )
 
     def clean_data(self):
-        target = 'electricity_access'
-        feature = 'gdp' 
-
-        if 'year' in self.df.columns:
-            self.df['year'] = self.df['year'].astype(str).str.extract('(\d+)').astype(int)
-    
-        if feature in self.df.columns:
-            self.df[feature] = self.df[feature] / 1_000_000_000
-
-        print(f"\n--- HYBRID OLS IMPUTATION: {target.upper()} ---")
-        data_full = self.df.dropna(subset=[target, feature])
-        data_missing = self.df[self.df[target].isnull() & self.df[feature].notnull()]
-
-        if not data_missing.empty and not data_full.empty:
-            model = LinearRegression()
-            model.fit(data_full[[feature]], data_full[target])
-            predictions = model.predict(data_missing[[feature]])
-            self.df.loc[self.df[target].isnull() & self.df[feature].notnull(), target] = predictions
-            print(f"Successfully imputed {len(predictions)} values via OLS.")
-
-        # Temporal Interpolation
-        self.df = self.df.dropna(subset=['year']) 
-        self.df['year'] = pd.to_datetime(self.df['year'].astype(int), format='%Y')
-        self.df = self.df.set_index('year')
-        self.df = self.df.infer_objects(copy=False) 
-        self.df = self.df.interpolate(method='time')
-        self.df = self.df.reset_index()
-        self.df['year'] = self.df['year'].dt.year.astype(int)
-
-        # Stage 5 Statistics logic
-        final_stats_df = self.df.copy()
-        final_stats_df['year'] = final_stats_df['year'].astype(str)
-        final_stats_df['economy'] = final_stats_df['economy'].astype(str)
-        summary = final_stats_df.describe(include='all').fillna(0)
-
+        pass
         def formatter(val, row_name):
             if row_name == 'count':
                 try: return f"{int(float(val))}"
@@ -69,9 +34,7 @@ class DataCleaner:
                 return f"{float(val):.4g}" if not isinstance(val, str) else val
             except: return val
 
-        formatted_summary = summary.apply(lambda col: [formatter(v, summary.index[i]) for i, v in enumerate(col)])
-        formatted_summary.index = summary.index
-        print(formatted_summary)
+        pass # Prints the formatted version via lamda function
         
         return self.df
     

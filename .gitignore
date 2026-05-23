@@ -1,0 +1,9 @@
+# Ignore environment variables
+api.env
+
+# Ignore the actual SQLite database file
+*.sqlite
+*.db
+
+# Ignore Python cache
+__pycache__/
