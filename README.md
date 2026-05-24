@@ -2,7 +2,7 @@
 
 DS / ML project. Emphasis on API maintenance and ETL, Exploratory Data Analysis and and Machine Learning Prediction.
 
-QUESTION: To what extent is the Digital Silk Road going to drive trilateral energy equity (Electricity and Solar Energy) and consumer spending and currency stability in households by 2030?
+QUESTION: To what extent is the Digital Silk Road going to drive trilateral energy equity (Electricity and Solar Energy); consumer spending and currency stability in households by 2030?
 
 Dataset: API driven Combination featuring reputable sources including official World Bank, DBNomics, etc.
 

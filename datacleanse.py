@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import json
-from sklearn.linear_model import LinearRegression
 
 class DataCleaner:
     def __init__(self, data_source):
@@ -39,11 +38,4 @@ class DataCleaner:
         return self.df
     
     def gen_json(self):
-        data_dict = {
-            "metadata": {"source": "Trilateral_API_Merge", "rows": len(self.df)},
-            "cleaned_data": self.df.to_dict(orient='records')
-        }
-        self.json_output = json.dumps(data_dict, default=str, indent=4)
-        with open('cleaned_data.json', 'w') as f:
-            f.write(self.json_output)
-        return self.json_output
+        pass
