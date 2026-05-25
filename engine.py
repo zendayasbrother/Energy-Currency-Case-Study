@@ -2,8 +2,7 @@ from datacleanse import DataCleaner
 import pandas as pd
 import numpy as np
 from scipy import stats
-import wbgapi as wb
-from nashpy import nash
+import nashpy as nash
 import json
 from sklearn.linear_model import LinearRegression 
 import statsmodels.api as sm
