@@ -6,6 +6,9 @@ from engine import DataEngine
 
 if __name__ == "__main__":
     print("Initializing API fetch for Trilateral Analysis...")
+    DataCleaner()
+    cleaner = DataCleaner.__init__()
+    print(cleaner)
     # 1. PRE-CLEANING RAW DATASET PREVIEW
     # 2. RUN CLEANING PROCESS
     # 3. POST-CLEANING PROCESSED DATASET PREVIEW

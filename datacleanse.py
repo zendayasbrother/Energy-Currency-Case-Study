@@ -2,15 +2,19 @@ import pandas as pd
 import numpy as np
 from dotenv import load_env
 import os
+import requests
 import json
 
 class DataCleaner:
     def __init__(self, data_source):
+        load_env()
+        api_key = os.getenviron.get('UNCOM_KEY') # get API
         if isinstance(data_source, pd.DataFrame):
+            data_source = api_key
             self.df = data_source
             print("DataFrame ingested from API successfully.")
         else:
-            self.df = pd.read_csv(data_source)
+            self.df = pd.read_json(data_source)
             print(f"File loaded successfully from {data_source}")
 
         self.standardize_columns()
