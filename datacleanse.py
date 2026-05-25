@@ -5,7 +5,13 @@ import requests
 import json
 
 class DataCleaner:
-    def __init__(self, api_url):
+    def __init__(self, api_url, api_key, countries):
+        params = {
+            "reporterCode": countries,   # Example: USA
+            "partnerCode": "0",      # Example: World
+            "period": "2023",
+            "cmdCode": "2709"        # Example: Oil
+        }
         response = requests.get(api_url)
         if response.status_code == 200: 
             self.df = pd.DataFrame(response.json())

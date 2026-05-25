@@ -12,8 +12,8 @@ warnings.filterwarnings('ignore')
 
 
 class ECModel:
-    def __init__(self, data_source):
-        self.data_cleaner = DataCleaner(data_source)
+    def __init__(self):
+        self.data_cleaner = DataCleaner()
 
     def process_data(self):
         self.data_cleaner.clean_data()
