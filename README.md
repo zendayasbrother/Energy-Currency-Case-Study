@@ -6,6 +6,6 @@ QUESTION: To what extent is the Digital Silk Road going to drive trilateral ener
 
 Dataset: API driven UNComtrade data
 
-Tech Stack: Pandas, Numpy, NashPy, SKlearn, Stats Model (data cleaning, intro / intermediate statistics + game theory, ML models)
+Tech Stack: Python, NashPy / Mesa, SKlearn, Stats Model (data cleaning, intro / intermediate statistics + game theory, ML models)
 
 Conjuction with a simpler, preceding EDA and Visualisation project, affecting the same trilateral trade relationship; culminating the two into a website via a JSON bridge
