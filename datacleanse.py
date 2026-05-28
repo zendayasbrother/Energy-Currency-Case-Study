@@ -17,17 +17,30 @@ class DataCleaner:
         }
         
 
+        def __init__(self, api_url, api_key, countries):
+        params = {
+            "typeCode": "C",
+            "freqCode": "A",
+            "clCode": "HS",
+            "reporterCode": countries,
+            "partnerCode": "0",
+            "period": "2023",
+            "cmdCode": "2709"
+        }
         headers = {"Ocp-Apim-Subscription-Key": api_key}
-        response = requests.get(api_url)
-        if response.status_code == 200: 
-            self.df = pd.DataFrame(response.json())
+        
+        # YOU WERE MISSING THE PARAMS HERE
+        response = requests.get(api_url, params=params, headers=headers)
+        
+        if response.status_code == 200:
+            self.df = pd.DataFrame(response.json()['dataset'])
             print("API successfuly ingested")
             self.standardize_columns()
         else:
-            print("API didn't load correcftly")
-            raise Exception("Failed to load the URL and fetch data. Status code {response.status_code}")
-
-    
+            print(f"Error: {response.status_code} - {response.text}")
+            raise Exception("API request failed")
+        response = requests.get(api_url)
+        
 
     def standardize_columns(self):
         self.df.columns = (
