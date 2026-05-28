@@ -5,6 +5,8 @@ import json
 
 class DataCleaner:
     def __init__(self, api_url, api_key, countries):
+        countries = countries.replace(" ", "")
+        
         params = {
             "typeCode": "C",          # Commodities
             "freqCode": "A",          # Annual
@@ -19,7 +21,7 @@ class DataCleaner:
         response = requests.get(api_url, params=params, headers=headers)
         
         if response.status_code == 200:
-            self.df = pd.DataFrame(response.json()['dataset'])
+            self.df = pd.DataFrame(response.json())
             print("API successfuly ingested")
             self.standardize_columns()
         else:
