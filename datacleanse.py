@@ -7,11 +7,17 @@ import json
 class DataCleaner:
     def __init__(self, api_url, api_key, countries):
         params = {
-            "reporterCode": countries,   # Example: USA
-            "partnerCode": "0",      # Example: World
+            "typeCode": "C",          # Commodities
+            "freqCode": "A",          # Annual
+            "clCode": "HS",          
+            "reporterCode": countries, 
+            "partnerCode": "0",       # World
             "period": "2023",
-            "cmdCode": "2709"        # Example: Oil
+            "cmdCode": "2709"         # Electricity and Solar
         }
+        
+
+        headers = {"Ocp-Apim-Subscription-Key": api_key}
         response = requests.get(api_url)
         if response.status_code == 200: 
             self.df = pd.DataFrame(response.json())
