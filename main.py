@@ -13,6 +13,9 @@ if __name__ == "__main__":
     api_url = os.environ.get('UNCOM_URL') # get API creds
     api_key = os.environ.get('UNCOM_KEY')
     
+    print(f"DEBUG: URL found: {api_url is not None}")
+    print(f"DEBUG: KEY found: {api_key is not None}")
+    
     if api_url is None or api_key is None:
         print("CRITICAL ERROR: .env file isnt set properly")
         exit() # Stop execution

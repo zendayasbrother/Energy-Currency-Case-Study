@@ -1,5 +1,5 @@
 # Ignore environment variables
-api.env
+.env
 .venv
 
 # Ignore Python cache

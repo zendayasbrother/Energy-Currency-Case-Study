@@ -15,20 +15,7 @@ class DataCleaner:
             "cmdCode": "2709"         # Electricity and Solar
         }
         
-
-        def __init__(self, api_url, api_key, countries):
-        params = {
-            "typeCode": "C",
-            "freqCode": "A",
-            "clCode": "HS",
-            "reporterCode": countries,
-            "partnerCode": "0",
-            "period": "2023",
-            "cmdCode": "2709"
-        }
         headers = {"Ocp-Apim-Subscription-Key": api_key}
-        
-        # YOU WERE MISSING THE PARAMS HERE
         response = requests.get(api_url, params=params, headers=headers)
         
         if response.status_code == 200:
