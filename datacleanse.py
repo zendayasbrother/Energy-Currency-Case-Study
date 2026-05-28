@@ -47,10 +47,11 @@ class DataCleaner:
         print(self.df.head(35))
 
         print("\n--- Data Types ---")
-        print(self.df.dtypes())
+        print(self.df.dtypes)
         print(self.df.info())
         print(self.df.describe())
 
         pass # Sub function ofr formatting - prints the formatted version via lamda function
+        pass # Save to dataset / structure for ease
         
         return self.df

@@ -21,6 +21,7 @@ if __name__ == "__main__":
         exit() # Stop execution
         
     cleaner = DataCleaner(api_url, api_key, country_codes)
+    cleaner.clean_data()
     # 1. PRE-CLEANING RAW DATASET PREVIEW
     # 2. RUN CLEANING PROCESS
     # 3. POST-CLEANING PROCESSED DATASET PREVIEW
