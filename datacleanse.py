@@ -1,11 +1,19 @@
 import pandas as pd
 import numpy as np
-
+import psycopg2
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+import os
 import requests
 import json
+    
+load_dotenv()
 
 class DataCleaner:
-    def __init__(self, api_url, api_key, countries):
+    def __init__(self, api_url, api_key, countries, db_path):
+        self.engine = create_engine(db_path)
+        countries = countries.replace(" ", "")
+        
         params = {
             "typeCode": "C",          # Commodities
             "freqCode": "A",          # Annual
@@ -16,18 +24,19 @@ class DataCleaner:
             "cmdCode": "2709"         # Electricity and Solar
         }
         
-
         headers = {"Ocp-Apim-Subscription-Key": api_key}
-        response = requests.get(api_url)
-        if response.status_code == 200: 
-            self.df = pd.DataFrame(response.json())
+        response = requests.get(api_url, params=params, headers=headers)
+        
+        if response.status_code == 200:
+            self.df = pd.json_normalize(response.json()['dataset'])
             print("API successfuly ingested")
-            self.standardize_columns()
         else:
-            print("API didn't load correcftly")
-            raise Exception("Failed to load the URL and fetch data. Status code {response.status_code}")
-
-    
+            self.df = pd.DataFrame(response.json())
+            print(f"Error: {response.status_code} - {response.text}")
+            raise Exception("API request failed")
+        
+        response = requests.get(api_url)
+        self.standardize_columns()
 
     def standardize_columns(self):
         self.df.columns = (
@@ -42,14 +51,32 @@ class DataCleaner:
         print(f"Initial Dimensions: {self.df.shape}")
 
 
-        print("\n--- First 35 Rows ---")
-        print(self.df.head(35))
+        print("\n--- First 10 rows ---")
+        print(self.df.head(10))
+        print(self.df.shape)
+        self.df = self.df.fillna(0)
 
         print("\n--- Data Types ---")
-        print(self.df.dtypes())
+        print(self.df.dtypes)
         print(self.df.info())
         print(self.df.describe())
 
-        pass # Sub function ofr formatting - prints the formatted version via lamda function
+        pass # Sub function for formatting - prints the formatted version via lamda function
+    
+    # function(s) to save / push api to database for ease. access via env
+    def connect_database(self):
+        if self.df is None or self.df.empty:
+            print("No data to push.")
+            return
         
-        return self.df
+        try:
+            # SQL query via pandas to push the API data into a new (created table)
+            self.df.to_sql(
+                name = "bilateral_trade",
+                con = self.engine,
+                if_exists = "replace",
+                index = False
+            )
+            print(f"Data successfully pushed to new table: {self.name}")
+        except Exception as e:
+            print(f"Error reading table: {e}")
