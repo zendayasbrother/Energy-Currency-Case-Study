@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import psycopg2
 import requests
 import json
 
@@ -43,8 +44,8 @@ class DataCleaner:
         print(f"Initial Dimensions: {self.df.shape}")
 
 
-        print("\n--- First 35 Rows ---")
-        print(self.df.head(35))
+        print("\n--- First 10 rows ---")
+        print(self.df.head(10))
 
         print("\n--- Data Types ---")
         print(self.df.dtypes)
@@ -52,6 +53,6 @@ class DataCleaner:
         print(self.df.describe())
 
         pass # Sub function ofr formatting - prints the formatted version via lamda function
-        pass # Save to dataset / structure for ease
+        pass # Save to database for ease. access via env
         
-        return self.df
+        
