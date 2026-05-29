@@ -3,6 +3,7 @@ import numpy as np
 import psycopg2
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+import os
 import requests
 import json
     
@@ -27,14 +28,15 @@ class DataCleaner:
         response = requests.get(api_url, params=params, headers=headers)
         
         if response.status_code == 200:
-            self.df = pd.DataFrame(response.json())
+            self.df = pd.json_normalize(response.json()['dataset'])
             print("API successfuly ingested")
-            self.standardize_columns()
         else:
+            self.df = pd.DataFrame(response.json())
             print(f"Error: {response.status_code} - {response.text}")
             raise Exception("API request failed")
-        response = requests.get(api_url)
         
+        response = requests.get(api_url)
+        self.standardize_columns()
 
     def standardize_columns(self):
         self.df.columns = (
@@ -51,6 +53,8 @@ class DataCleaner:
 
         print("\n--- First 10 rows ---")
         print(self.df.head(10))
+        print(self.df.shape)
+        self.df = self.df.fillna(0)
 
         print("\n--- Data Types ---")
         print(self.df.dtypes)
@@ -59,9 +63,20 @@ class DataCleaner:
 
         pass # Sub function for formatting - prints the formatted version via lamda function
     
+    # function(s) to save / push api to database for ease. access via env
     def connect_database(self):
-        pass
+        if self.df is None or self.df.empty:
+            print("No data to push.")
+            return
         
-        
-        
-        # function to save / push api to database for ease. access via env
+        try:
+            # SQL query via pandas to push the API data into a new (created table)
+            self.df.to_sql(
+                name = "bilateral_trade",
+                con = self.engine,
+                if_exists = "replace",
+                index = False
+            )
+            print(f"Data successfully pushed to new table: {self.name}")
+        except Exception as e:
+            print(f"Error reading table: {e}")
