@@ -1,6 +1,6 @@
 # Ignore environment variables
-api.env
 .venv
+.env
 
 # Ignore Python cache
 __pycache__/
