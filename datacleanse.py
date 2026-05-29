@@ -1,11 +1,16 @@
 import pandas as pd
 import numpy as np
 import psycopg2
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
 import requests
 import json
+    
+load_dotenv()
 
 class DataCleaner:
-    def __init__(self, api_url, api_key, countries):
+    def __init__(self, api_url, api_key, countries, db_path):
+        self.engine = create_engine(db_path)
         countries = countries.replace(" ", "")
         
         params = {
@@ -52,7 +57,11 @@ class DataCleaner:
         print(self.df.info())
         print(self.df.describe())
 
-        pass # Sub function ofr formatting - prints the formatted version via lamda function
-        pass # Save to database for ease. access via env
+        pass # Sub function for formatting - prints the formatted version via lamda function
+    
+    def connect_database(self):
+        pass
         
         
+        
+        # function to save / push api to database for ease. access via env
