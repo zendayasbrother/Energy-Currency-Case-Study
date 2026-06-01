@@ -26,12 +26,13 @@ class DataCleaner:
         
         headers = {"Ocp-Apim-Subscription-Key": api_key}
         response = requests.get(api_url, params=params, headers=headers)
+        data = response.json()
         
         if response.status_code == 200:
-            self.df = pd.json_normalize(response.json()['dataset'])
+            self.df = pd.json_normalize(data['dataset'])
             print("API successfuly ingested")
         else:
-            self.df = pd.DataFrame(response.json())
+            self.df = None
             print(f"Error: {response.status_code} - {response.text}")
             raise Exception("API request failed")
         
