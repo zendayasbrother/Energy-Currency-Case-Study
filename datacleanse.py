@@ -3,6 +3,7 @@ import numpy as np
 import psycopg2
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 import os
 import requests
 import json
@@ -14,6 +15,7 @@ class DataCleaner:
         self.engine = create_engine(db_path)
         self.name = "bilateral_trade" # Define this here!
         self.df = None
+        countries = countries.replace(" ", "")
         
         params = {
             "typeCode": "C",          # Commodities
@@ -38,6 +40,17 @@ class DataCleaner:
             print(f"Error: {response.status_code} - {response.text}")
             raise Exception("API request failed")
         
+        
+        if response.status_code == 200:
+            self.df = pd.json_normalize(response.json()['dataset'])
+            print("API successfuly ingested")
+        else:
+            self.df = pd.DataFrame(response.json())
+            print(f"Error: {response.status_code} - {response.text}")
+            raise Exception("API request failed")
+        
+        response = requests.get(api_url)
+        self.standardize_columns()
 
     def standardize_columns(self):
         self.df.columns = (
@@ -55,6 +68,8 @@ class DataCleaner:
         print("\n--- Data Audit ---")
         print(self.df.head(10))
         print(self.df.tail(5))
+        print("\n--- First 10 rows ---")
+        print(self.df.head(10))
         print(self.df.shape)
         self.df = self.df.fillna(0)
 
@@ -82,6 +97,7 @@ class DataCleaner:
                 name = "bilateral_trade",
                 con = self.engine,
                 if_exists = "append",
+                if_exists = "replace",
                 index = False
             )
             print(f"Data successfully pushed to new table: {self.name}")
