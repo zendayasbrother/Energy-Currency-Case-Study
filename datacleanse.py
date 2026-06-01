@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import psycopg2
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 import os
 import requests
 import json
@@ -12,13 +12,14 @@ load_dotenv()
 class DataCleaner:
     def __init__(self, api_url, api_key, countries, db_path):
         self.engine = create_engine(db_path)
-        countries = countries.replace(" ", "")
+        self.name = "bilateral_trade" # Define this here!
+        self.df = None
         
         params = {
             "typeCode": "C",          # Commodities
             "freqCode": "A",          # Annual
             "clCode": "HS",          
-            "reporterCode": countries, 
+            "reporterCode": countries.replace(" ", ""), 
             "partnerCode": "0",       # World
             "period": "2023",
             "cmdCode": "2709"         # Electricity and Solar
@@ -26,18 +27,17 @@ class DataCleaner:
         
         headers = {"Ocp-Apim-Subscription-Key": api_key}
         response = requests.get(api_url, params=params, headers=headers)
-        data = response.json()
+        self.df = None
         
         if response.status_code == 200:
-            self.df = pd.json_normalize(data['dataset'])
+            self.df = pd.json_normalize(response.json()['dataset'])
+            self.df = self.df.fillna(0)
+            self.standardize_columns()
             print("API successfuly ingested")
         else:
-            self.df = None
             print(f"Error: {response.status_code} - {response.text}")
             raise Exception("API request failed")
         
-        response = requests.get(api_url)
-        self.standardize_columns()
 
     def standardize_columns(self):
         self.df.columns = (
@@ -52,8 +52,9 @@ class DataCleaner:
         print(f"Initial Dimensions: {self.df.shape}")
 
 
-        print("\n--- First 10 rows ---")
+        print("\n--- Data Audit ---")
         print(self.df.head(10))
+        print(self.df.tail(5))
         print(self.df.shape)
         self.df = self.df.fillna(0)
 
@@ -71,11 +72,16 @@ class DataCleaner:
             return
         
         try:
+            # Idempotency with it removing duplicates every single run
+            with self.engine.connect() as conn:
+                conn.execute(text(f"DELETE FROM {self.name} WHERE period = 2023"))
+                conn.commit() 
+                
             # SQL query via pandas to push the API data into a new (created table)
             self.df.to_sql(
                 name = "bilateral_trade",
                 con = self.engine,
-                if_exists = "replace",
+                if_exists = "append",
                 index = False
             )
             print(f"Data successfully pushed to new table: {self.name}")
