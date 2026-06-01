@@ -1,4 +1,4 @@
-from datacleanse import DataCleaner
+from engine import DataEngine
 import pandas as pd
 import numpy as np
 import json
@@ -10,9 +10,6 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-class ECModel:
-    def __init__(self):
-        self.data_cleaner = DataCleaner()
-
-    def process_data(self):
-        self.data_cleaner.clean_data()
+class ECModel(DataEngine):
+    def __init__(self, cleaner_ins):
+        super().__init__(cleaner_ins)

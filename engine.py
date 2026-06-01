@@ -1,4 +1,3 @@
-from datacleanse import DataCleaner
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -11,17 +10,20 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# DataEngine is a class for orchestrating the math and game theory analysis 
-class DataEngine(DataCleaner):
-    def __init__(self, data_source):
-        super().__init__(data_source)
+# DataEngine is a composition class for orchestrating the math and game theory analysis 
+class DataEngine():
+    def __init__(self, cleaner_ins):
+        self.cleaner = cleaner_ins
+        self.df = self.cleaner.df 
         
     def run_analysis(self):
-        self.cleaned_df = self.clean_data() 
-        pass  # Placeholder for your analysis logic
+        print("Running full analysis:")
+        print(self.df.describe())
+        pass  # Placeholder for my EDA  logic
+        return self.df.describe()
 
     def run_game_theory(self):
-        # Placeholder for your nashpy logic
+        # Placeholder for my nashpy logic
         pass 
-    
-    # Future function holding json object
+
+        
