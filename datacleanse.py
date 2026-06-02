@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import psycopg2
+from dbnomics import fetchseries
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 import os
@@ -35,7 +36,6 @@ class DataCleaner:
             print(f"Error: {response.status_code} - {response.text}")
             raise Exception("API request failed")
         
-        response = requests.get(api_url)
         self.standardize_columns()
 
     def standardize_columns(self):
@@ -64,7 +64,17 @@ class DataCleaner:
         pass # Sub function for formatting - prints the formatted version via lamda function
     
     # function(s) to save / push api to database for ease. access via env
-    def connect_database(self):
+    def connect_database(self, db_path = None):
+        
+        if db_path:
+            conn = psycopg2.connect(os.getenv("DATABASE_URL")) # Use your connection string here
+            cur = conn.cursor()
+            with open(db_path, 'r') as f:
+                cur.execute(f.read())
+            conn.commit()
+            cur.close()
+            conn.close()
+        
         if self.df is None or self.df.empty:
             print("No data to push.")
             return
@@ -80,3 +90,5 @@ class DataCleaner:
             print(f"Data successfully pushed to new table: {self.name}")
         except Exception as e:
             print(f"Error reading table: {e}")
+            
+    

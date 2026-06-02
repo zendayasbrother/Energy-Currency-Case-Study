@@ -9,6 +9,7 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+# Plots different mathematical demos, and visualises complex relationships 
 
 class ECModel(DataEngine):
     def __init__(self, cleaner_ins):
