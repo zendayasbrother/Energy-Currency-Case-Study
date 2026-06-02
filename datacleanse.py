@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import psycopg2
-from dbnomics import fetch_series
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy import create_engine
@@ -16,7 +15,7 @@ class DataCleaner:
         self.engine = create_engine(db_path)
         self.name = "bilateral_trade" # Define this here!
         self.df = None
-        self.df2 = fetch_series("WB/WDI/NY.GDP.MKTP.CD")
+        # implement DBNomics here
         countries = countries.replace(" ", "")
         
         params = {
@@ -115,4 +114,5 @@ class DataCleaner:
         except Exception as e:
             print(f"Error reading table: {e}")
             
-    
+    """ Repeat the same ETL process but with DBNomices and monetary and social data
+    in a modular manner, then test it"""
