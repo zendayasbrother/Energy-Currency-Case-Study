@@ -112,10 +112,10 @@ class DataCleaner:
             )
             print(f"Data successfully pushed to new table: {self.name}")
         except Exception as e:
-            print(f"Error reading table: {e}")
+            print(f"Error reading table: {e}")  #automaticallu update DSR SCRIPT.sql file though
             
-    """ Repeat the same ETL process but with DBNomices and monetary and social data
-    in a modular manner, then test it"""
+    """ Repeat the same ETL process but with DBNomices and monetary data
+    in a modular manner, then test it """
 
 class Fetch: 
     def __init__(self):

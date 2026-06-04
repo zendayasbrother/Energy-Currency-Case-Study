@@ -1,14 +1,33 @@
 # test.py
 import pytest
 import pandas as pd
+import os
 from unittest.mock import MagicMock
 from datacleanse import DataCleaner, Fetch
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 1. FIXTURES: Define your "Input" state
 @pytest.fixture
 def mock_cleaner():
+    print("Initializing API fetch for Trilateral Analysis...")
+    load_dotenv()
+    country_codes = "288, 566, 156"
+    api_url = os.environ.get('UNCOM_URL') # get API creds
+    api_key = os.environ.get('UNCOM_KEY')
+    
+    print(f"DEBUG: URL found: {api_url is not None}")
+    print(f"DEBUG: KEY found: {api_key is not None}")
+    
+    if api_url is None or api_key is None:
+        print("CRITICAL ERROR: .env file isnt set properly")
+        exit() # Stop execution
+        
+    cleaner = DataCleaner(api_url, api_key, country_codes)
+    cleaner.clean_data()
     # We return a cleaner object but with a mocked API layer
-    cleaner = DataCleaner(api_url="http://mock.url", api_key="test_key")
+    cleaner = DataCleaner(api_url, api_key)
     cleaner.fetch_all = MagicMock(return_value=pd.DataFrame({'a': [1, None]}))
     return cleaner
 
