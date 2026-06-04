@@ -104,7 +104,7 @@ class DataCleaner:
                 
             # SQL query via pandas to push the API data into a new (created table)
             self.df.to_sql(
-                name = "bilateral_trade",
+                name = "Bilateral Trade",
                 con = self.engine,
                 if_exists = "append",
                 if_exists = "replace",
@@ -122,10 +122,40 @@ class Fetch:
         self.engine = DataCleaner()
         self.cleaner = self.engine.clean_data
         self.name = "currency" 
-        self.df = fetch_series('A-FP.CPI.TOTL.ZG-GHA', 'A-FP.CPI.TOTL.ZG-NGA')
+        self.df = fetch_series('A-FP.CPI.TOTL.ZG-GHA', 'A-FP.CPI.TOTL.ZG-NGA') # static data (fit exchange rates in here)
         self.engine.standardize_columns 
         
     def clean_data(self): 
         print(self.cleaner) 
         
-    
+    def connect_database(self, db_path = None): 
+        if db_path:
+            conn = psycopg2.connect(os.getenv("DATABASE_URL")) # Use your connection string here
+            cur = conn.cursor()
+            with open(db_path, 'r') as f:
+                cur.execute(f.read())
+            conn.commit()
+            cur.close()
+            conn.close()
+        
+        if self.df is None or self.df.empty:
+            print("No data to push.")
+            return
+        
+        try:
+            # Idempotency with it removing duplicates every single run
+            with self.engine.connect() as conn:
+                conn.execute(text(f"DELETE FROM {self.name} WHERE period = 2026")) # double check - mayybe "where discint"?
+                conn.commit() 
+                
+            # SQL query via pandas to push the API data into a new (created table)
+            self.df.to_sql(
+                name = "Currency and Stability",
+                con = self.engine,
+                if_exists = "append",
+                if_exists = "replace",
+                index = False
+            )
+            print(f"Data successfully pushed to new table: {self.name}")
+        except Exception as e:
+            print(f"Error reading table: {e}")
