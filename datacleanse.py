@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
 import psycopg2
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
-from sqlalchemy import create_engine
 import os
 import requests
 import json
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
+from dbnomics import fetch_series 
+import importlib.metadata
     
 load_dotenv()
 
@@ -15,7 +16,6 @@ class DataCleaner:
         self.engine = create_engine(db_path)
         self.name = "bilateral_trade" # Define this here!
         self.df = None
-        # implement DBNomics here
         countries = countries.replace(" ", "")
         
         params = {
@@ -99,7 +99,7 @@ class DataCleaner:
         try:
             # Idempotency with it removing duplicates every single run
             with self.engine.connect() as conn:
-                conn.execute(text(f"DELETE FROM {self.name} WHERE period = 2023"))
+                conn.execute(text(f"DELETE FROM {self.name} WHERE period = 2026")) # double check - mayybe "where discint"?
                 conn.commit() 
                 
             # SQL query via pandas to push the API data into a new (created table)
@@ -116,3 +116,16 @@ class DataCleaner:
             
     """ Repeat the same ETL process but with DBNomices and monetary and social data
     in a modular manner, then test it"""
+
+class Fetch: 
+    def __init__(self):
+        self.engine = DataCleaner()
+        self.cleaner = self.engine.clean_data
+        self.name = "currency" 
+        self.df = fetch_series('A-FP.CPI.TOTL.ZG-GHA', 'A-FP.CPI.TOTL.ZG-NGA')
+        self.engine.standardize_columns 
+        
+    def clean_data(self): 
+        print(self.cleaner) 
+        
+    
