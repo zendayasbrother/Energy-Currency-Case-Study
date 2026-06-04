@@ -14,22 +14,25 @@ load_dotenv()
 class DataCleaner:
     def __init__(self, api_url, api_key, countries, db_path):
         self.engine = create_engine(db_path)
-        self.name = "bilateral_trade" # Define this here!
+        self.name = "Bilateral Trade"
+        self.api_key = api_key
+        self.api_url = api_url
         self.df = None
         countries = countries.replace(" ", "")
-        
+    
+    def fetch_api(self, countries):
         params = {
             "typeCode": "C",          # Commodities
             "freqCode": "A",          # Annual
             "clCode": "HS",          
-            "reporterCode": countries.replace(" ", ""), 
+            "reporterCode": countries, 
             "partnerCode": "0",       # World
             "period": "2023",
             "cmdCode": "2709"         # Electricity and Solar
         }
         
-        headers = {"Ocp-Apim-Subscription-Key": api_key}
-        response = requests.get(api_url, params=params, headers=headers)
+        headers = {"Ocp-Apim-Subscription-Key": self.api_key}
+        response = requests.get(self.api_url, params=params, headers=headers)
         self.df = None
         
         if response.status_code == 200:
@@ -38,15 +41,6 @@ class DataCleaner:
             self.standardize_columns()
             print("API successfuly ingested")
         else:
-            print(f"Error: {response.status_code} - {response.text}")
-            raise Exception("API request failed")
-        
-        
-        if response.status_code == 200:
-            self.df = pd.json_normalize(response.json()['dataset'])
-            print("API successfuly ingested")
-        else:
-            self.df = pd.DataFrame(response.json())
             print(f"Error: {response.status_code} - {response.text}")
             raise Exception("API request failed")
         
@@ -108,7 +102,6 @@ class DataCleaner:
                 con = self.engine,
                 if_exists = "append",
                 if_exists = "replace",
-                index = False
             )
             print(f"Data successfully pushed to new table: {self.name}")
         except Exception as e:
@@ -117,7 +110,7 @@ class DataCleaner:
     """ Repeat the same ETL process but with DBNomices and monetary data
     in a modular manner, then test it """
 
-class Fetch: 
+class Fetcher: 
     def __init__(self):
         self.engine = DataCleaner()
         self.cleaner = self.engine.clean_data
