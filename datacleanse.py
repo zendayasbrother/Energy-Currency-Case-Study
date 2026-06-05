@@ -122,18 +122,42 @@ class Fetcher(DataCleaner):
     def __init__(self, db_path):
         super().__init__(None, None, None, db_path)
         self.name = "Currency_Stability"
-        self.targets = {
-            'cpi': [
+        self.curr_inf = [
                 'WorldBank/WDI/FP.CPI.TOTL.ZG-GHA',
                 'WorldBank/WDI/FP.CPI.TOTL.ZG-NGA',
                 'WorldBank/WDI/FP.CPI.TOTL.ZG-CHN'
-            ],
-            'fx': [
+            ] # inflation (% change)
+        
+        self.fx = [
                 'IMF/IFS/A.GHA.ENDE_XDC_USD_RATE',
                 'IMF/IFS/A.NGN.ENDE_XDC_USD_RATE',
                 'IMF/IFS/A.CHN.ENDE_XDC_USD_RATE'
-            ]
-        } # array of DBN codees to loop and test fetching
+            ] # exchange rates
+        
+    def fetch_all(self):
+        # Mapping connection
+        data_map = {
+            'inflation': self.curr_inf,
+            'exchange_rate': self.fx
+        }
+        
+        frame = []
+        
+        for category, code_list in data_map.items():
+            for code in code_list:
+                try:
+                    df = fetch_series(code)
+                    self.standardize_columns()
+                    df['type'] = category
+                    frame.append(df)
+                except Exception as e:
+                    print(f"Error fetching {code}: {e}")
+                    
+        # Post fetching concatenation
+        if frame:
+            self.df = pd.concat(frame, ignore_index=True)
+            print(f"Successfully ingested {len(frame)} series.")
+        
         
     def clean_data(self): 
         super().clean_data()
