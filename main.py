@@ -1,9 +1,15 @@
 import os
 from datacleanse import DataCleaner, Fetcher
 from engine import DataEngine
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# This will find the .env file regardless of where you run the script from,
+# as long as the .env file is in the same folder as main.py
+base_path = Path(__file__).resolve().parent
+env_path = base_path / '.env'
+
+load_dotenv(dotenv_path=env_path)
 
 def trilateral_analysis():
     print("Initializing API fetch for Trilateral Analysis...")
