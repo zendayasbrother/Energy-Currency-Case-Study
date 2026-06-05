@@ -12,7 +12,7 @@ load_dotenv(dotenv_path=env_path)
 def trilateral_analysis():
     print("Initializing API fetch for Trilateral Analysis...")
     
-    countries = "288, 566, 156"
+    countries = ["288", "566", "156"]       
     api_url = os.environ.get('UNCOM_URL')
     api_key = os.environ.get('UNCOM_KEY')
     db_path = os.environ.get('DB_PATH')
@@ -26,10 +26,13 @@ def trilateral_analysis():
         
     cleaner = DataCleaner(api_url, api_key, countries, db_path)
     fetch = Fetcher(db_path)
-    
-    # Engine orchestration
-    engine = DataEngine(cleaner_ins = cleaner)
-    engine.run_analysis() # later dev
+    try:
+        cleaner.fetch_api(countries)
+        # Engine orchestration 
+        engine = DataEngine(cleaner_ins = cleaner)
+        engine.run_analysis() # later dev
+    except Exception as e:
+        print(f"Failed to fetch data or run engine: {e}")
     
 def run_swat(): 
     trilateral_analysis() # run UI, in this case -- run terminal interface for the website demo

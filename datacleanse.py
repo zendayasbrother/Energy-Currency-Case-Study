@@ -4,6 +4,7 @@ import psycopg2
 import os
 import requests
 import json
+import time
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from dbnomics import fetch_series 
@@ -19,37 +20,51 @@ class DataCleaner:
         self.api_url = api_url
         self.db_path = db_path
         self.df = None
-        
-        if countries is not None:
-            countries = countries.replace(" ", "")
-        self.countries = countries
-    
-    def fetch_api(self, countries):
-        params = {
-            "typeCode": "C",          # Commodities
-            "freqCode": "A",          # Annual
-            "clCode": "HS",          
-            "reporterCode": countries, 
-            "partnerCode": "0",       # World
-            "period": "2023",
-            "cmdCode": "2709"         # Electricity and Solar
-        }
-        
-        headers = {"Ocp-Apim-Subscription-Key": self.api_key}
-        response = requests.get(self.api_url, params=params, headers=headers)
-        self.df = None
-        
-        if response.status_code == 200:
-            self.df = pd.json_normalize(response.json()['dataset'])
-            self.df = self.df.fillna(0)
-            self.standardize_columns()
-            print("API successfuly ingested")
-        else:
-            print(f"Error: {response.status_code} - {response.text}")
-            raise Exception("API request failed")
-        
-        self.standardize_columns()
+        countries = [288, 566, 156]
 
+
+    def fetch_api(self, country_list):
+        dfs = []
+        
+        for country in country_list:
+            params = {
+                "reporterCode": str(country), # Ensure each request is handled individually
+                "partnerCode": "0",
+                "period": "2023",
+                "cmdCode": "2709"
+            }
+            
+            headers = {"Ocp-Apim-Subscription-Key": self.api_key}
+            
+            try:
+                response = requests.get(self.api_url, params=params, headers=headers)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    data = result.get('dataset') or result.get('data')
+                    
+                    if data:
+                        dfs.append(pd.json_normalize(data))
+                        print(f"Successfully fetched {country}")
+                    else:
+                        print(f"No data found for {country}")
+                elif response.status_code == 429:
+                    print("Rate limit hit, sleeping...")
+                    time.sleep(5) # Wait 5 seconds before retrying
+                else:
+                    print(f"Error {country}: {response.status_code} - {response.text}")
+            
+            except Exception as e:
+                print(f"Failed {country}: {e}")
+                
+            time.sleep(1.1) # Respect API rate limits (1 request/sec)
+
+        if dfs:
+            self.df = pd.concat(dfs, ignore_index=True)
+            self.standardize_columns()
+        else:
+            raise Exception("No data could be retrieved.")
+    
     def standardize_columns(self):
         self.df.columns = (
             self.df.columns.str.strip()
