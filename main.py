@@ -28,7 +28,7 @@ def trilateral_analysis():
     fetch = Fetcher(db_path)
     
     # Engine orchestration
-    engine = DataEngine(cleaner_ins = None)
+    engine = DataEngine(cleaner_ins = cleaner)
     engine.run_analysis() # later dev
     
 def run_swat(): 

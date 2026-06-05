@@ -13,6 +13,8 @@ warnings.filterwarnings('ignore')
 # DataEngine is a composition class for orchestrating the math and game theory analysis 
 class DataEngine():
     def __init__(self, cleaner_ins):
+        if cleaner_ins is None or cleaner_ins.df is None:
+            raise ValueError("DataEngine requires a cleaner instance with populated data.")
         self.cleaner = cleaner_ins
         self.df = self.cleaner.df 
         
