@@ -14,9 +14,10 @@ load_dotenv()
 class DataCleaner:
     def __init__(self, api_url, api_key, countries, db_path):
         self.engine = create_engine(db_path)
-        self.name = "Bilateral Trade"
+        self.name = "BilateralTrade"
         self.api_key = api_key
         self.api_url = api_url
+        self.db_path = db_path
         self.df = None
         countries = countries.replace(" ", "")
     
@@ -75,8 +76,7 @@ class DataCleaner:
         pass # Sub function for formatting - prints the formatted version via lamda function
     
     # function(s) to save / push api to database for ease. access via env
-    def connect_database(self, db_path = None):
-        
+    def connect_database(self, db_path):
         if db_path:
             conn = psycopg2.connect(os.getenv("DATABASE_URL")) # Use your connection string here
             cur = conn.cursor()
@@ -91,14 +91,20 @@ class DataCleaner:
             return
         
         try:
-            # Idempotency with it removing duplicates every single run
+            # Idempotency with it detecting + removing duplicates every single run
             with self.engine.connect() as conn:
-                conn.execute(text(f"DELETE FROM {self.name} WHERE period = 2026")) # double check - mayybe "where discint"?
+                query = text(f"""DELETE FROM "{self.name}"
+                            WHERE period IN (
+                                SELECT period FROM "{self.name}"
+                                GROUP BY period 
+                                HAVING COUNT(*) > 1
+                            )""")
+                conn.execute(query)
                 conn.commit() 
                 
-            # SQL query via pandas to push the API data into a new (created table)
+            # Push the API data into a new (created table)
             self.df.to_sql(
-                name = "Bilateral Trade",
+                name = "Bilateral_Trade",
                 con = self.engine,
                 if_exists = "replace",
             )
@@ -109,44 +115,14 @@ class DataCleaner:
     """ Repeat the same ETL process but with DBNomices and monetary data
     in a modular manner, then test it """
 
-class Fetcher: 
-    def __init__(self):
-        self.engine = DataCleaner()
-        self.cleaner = self.engine.clean_data
-        self.name = "currency" 
+class Fetcher(DataCleaner): 
+    def __init__(self, db_path):
+        super().__init__(None, None, None, db_path)
+        self.name = "Currency_Stability"
         self.df = fetch_series('A-FP.CPI.TOTL.ZG-GHA', 'A-FP.CPI.TOTL.ZG-NGA') # static data (fit exchange rates in here)
-        self.engine.standardize_columns 
         
     def clean_data(self): 
-        print(self.cleaner) 
+        super().clean_data()
         
     def connect_database(self, db_path = None): 
-        if db_path:
-            conn = psycopg2.connect(os.getenv("DATABASE_URL")) # Use your connection string here
-            cur = conn.cursor()
-            with open(db_path, 'r') as f:
-                cur.execute(f.read())
-            conn.commit()
-            cur.close()
-            conn.close()
-        
-        if self.df is None or self.df.empty:
-            print("No data to push.")
-            return
-        
-        try:
-            # Idempotency with it removing duplicates every single run
-            with self.engine.connect() as conn:
-                conn.execute(text(f"DELETE FROM {self.name} WHERE period = 2026")) # double check - mayybe "where discint"?
-                conn.commit() 
-                
-            # SQL query via pandas to push the API data into a new (created table)
-            self.df.to_sql(
-                name = "Currency and Stability",
-                con = self.engine,
-                if_exists = "replace",
-                index = False
-            )
-            print(f"Data successfully pushed to new table: {self.name}")
-        except Exception as e:
-            print(f"Error reading table: {e}")
+        super().connect_database(db_path)
