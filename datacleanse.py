@@ -15,10 +15,10 @@ load_dotenv()
 class DataCleaner:
     def __init__(self, api_url, api_key, countries, db_path):
         self.engine = create_engine(db_path)
-        self.name = "BilateralTrade"
         self.api_key = api_key
         self.api_url = api_url
         self.db_path = db_path
+        self.name = "bilateral_trade"
         self.df = None
         countries = [288, 566, 156]
 
@@ -94,36 +94,26 @@ class DataCleaner:
         pass # Sub function for formatting - prints the formatted version via lamda function
     
     # function(s) to save / push api to database for ease. access via env
-    def connect_database(self, db_path = None):
-        if db_path and os.path.exists(db_path):
-            try:
-                with self.engine.begin() as conn:  # .begin() automatically handles commits
-                    with open(db_path, 'r') as f:
-                        conn.execute(text(f.read()))
-                print(f"Executed setup script: {db_path}")
-            except Exception as e:
-                print(f"Error executing setup script: {e}")
-                return
-
+    def connect_database(self, db_path=None):
         if self.df is None or self.df.empty:
             print("No data to push.")
             return
 
         try:
-            # Idempotency to ensure the same result every run
             with self.engine.begin() as conn:
-                table_name = self.name.lower()
+                self.schema = '"Trade Intelligence"'
                 
                 self.df.to_sql(
-                    name=table_name,
-                    con=conn,
-                    if_exists="replace",
-                    index=False
+                    name = self.name,
+                    con = conn,
+                    schema = self.schema,
+                    if_exists = "replace",
+                    index = False
                 )
                 
-            print(f"Data successfully pushed to table: {table_name}")
+            print(f"Success: Data pushed to {self.schema}.{self.name}")
         except Exception as e:
-            print(f"CRITICAL ERROR pushing to database: {e}")
+            print(f"CRITICAL ERROR during database push: {e}")
             
     """ Repeat the same ETL process but with DBNomices and monetary data
     in a modular manner, then test it """
