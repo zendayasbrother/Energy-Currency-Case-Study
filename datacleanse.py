@@ -78,7 +78,7 @@ class DataCleaner:
     # function(s) to save / push api to database for ease. access via env
     def connect_database(self, db_path):
         if db_path:
-            conn = psycopg2.connect(os.getenv("DATABASE_URL")) # Use your connection string here
+            conn = psycopg2.connect(os.getenv("DB_PATH")) # Use your connection string here
             cur = conn.cursor()
             with open(db_path, 'r') as f:
                 cur.execute(f.read())
