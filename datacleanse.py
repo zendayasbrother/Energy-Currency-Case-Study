@@ -94,41 +94,36 @@ class DataCleaner:
         pass # Sub function for formatting - prints the formatted version via lamda function
     
     # function(s) to save / push api to database for ease. access via env
-    def connect_database(self, db_path):
-        if db_path:
-            conn = psycopg2.connect(os.getenv("DB_PATH")) # Use your connection string here
-            cur = conn.cursor()
-            with open(db_path, 'r') as f:
-                cur.execute(f.read())
-            conn.commit()
-            cur.close()
-            conn.close()
-        
+    def connect_database(self, db_path = None):
+        if db_path and os.path.exists(db_path):
+            try:
+                with self.engine.begin() as conn:  # .begin() automatically handles commits
+                    with open(db_path, 'r') as f:
+                        conn.execute(text(f.read()))
+                print(f"Executed setup script: {db_path}")
+            except Exception as e:
+                print(f"Error executing setup script: {e}")
+                return
+
         if self.df is None or self.df.empty:
             print("No data to push.")
             return
-        
+
         try:
-            # Idempotency with it detecting + removing duplicates every single run
-            with self.engine.connect() as conn:
-                query = text(f"""DELETE FROM "{self.name}"
-                            WHERE period IN (
-                                SELECT period FROM "{self.name}"
-                                GROUP BY period 
-                                HAVING COUNT(*) > 1
-                            )""")
-                conn.execute(query)
-                conn.commit() 
+            # Idempotency to ensure the same result every run
+            with self.engine.begin() as conn:
+                table_name = self.name.lower()
                 
-            # Push the API data into a new (created table)
-            self.df.to_sql(
-                name = "Bilateral_Trade",
-                con = self.engine,
-                if_exists = "replace",
-            )
-            print(f"Data successfully pushed to new table: {self.name}")
+                self.df.to_sql(
+                    name=table_name,
+                    con=conn,
+                    if_exists="replace",
+                    index=False
+                )
+                
+            print(f"Data successfully pushed to table: {table_name}")
         except Exception as e:
-            print(f"Error reading table: {e}")  #automaticallu update DSR SCRIPT.sql file though
+            print(f"CRITICAL ERROR pushing to database: {e}")
             
     """ Repeat the same ETL process but with DBNomices and monetary data
     in a modular manner, then test it """

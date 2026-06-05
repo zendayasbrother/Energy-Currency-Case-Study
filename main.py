@@ -28,6 +28,7 @@ def trilateral_analysis():
     fetch = Fetcher(db_path)
     try:
         cleaner.fetch_api(countries)
+        cleaner.connect_database(db_path=None)
         # Engine orchestration 
         engine = DataEngine(cleaner_ins = cleaner)
         engine.run_analysis() # later dev
