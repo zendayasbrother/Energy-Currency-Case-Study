@@ -21,14 +21,11 @@ def trilateral_analysis():
         print("CRITICAL ERROR: .env file isnt set properly")
         exit() # Stop execution
         
-    # The classes now only handle logic, not network-heavy initialization
     cleaner = DataCleaner(api_url, api_key, countries)
-    raw_df = cleaner.fetch_trade_data() 
-    clean_df = cleaner.apply_cleaning_rules(raw_df)
     
-    # Engine orchestration
+    """ # Engine orchestration
     engine = DataEngine(clean_df)
-    engine.run_analysis()
+    engine.run_analysis() """ # later dev
     
 def run_swat(): 
     print(trilateral_analysis) # run UI, in this case -- run terminal interface for the website demo

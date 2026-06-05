@@ -100,7 +100,6 @@ class DataCleaner:
             self.df.to_sql(
                 name = "Bilateral Trade",
                 con = self.engine,
-                if_exists = "append",
                 if_exists = "replace",
             )
             print(f"Data successfully pushed to new table: {self.name}")
@@ -145,7 +144,6 @@ class Fetcher:
             self.df.to_sql(
                 name = "Currency and Stability",
                 con = self.engine,
-                if_exists = "append",
                 if_exists = "replace",
                 index = False
             )
