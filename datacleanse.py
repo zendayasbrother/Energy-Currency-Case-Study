@@ -19,7 +19,10 @@ class DataCleaner:
         self.api_url = api_url
         self.db_path = db_path
         self.df = None
-        countries = countries.replace(" ", "")
+        
+        if countries is not None:
+            countries = countries.replace(" ", "")
+        self.countries = countries
     
     def fetch_api(self, countries):
         params = {
@@ -119,7 +122,20 @@ class Fetcher(DataCleaner):
     def __init__(self, db_path):
         super().__init__(None, None, None, db_path)
         self.name = "Currency_Stability"
-        self.df = fetch_series('A-FP.CPI.TOTL.ZG-GHA', 'A-FP.CPI.TOTL.ZG-NGA') # static data (fit exchange rates in here)
+        self.cpi_df = fetch_series([
+        'WorldBank/WDI/FP.CPI.TOTL.ZG-GHA',
+        'WorldBank/WDI/FP.CPI.TOTL.ZG-NGA',
+        'WorldBank/WDI/FP.CPI.TOTL.ZG-CHN'
+    ])
+    
+    
+        self.fx_df = fetch_series([
+            'IMF/IFS/A.GHA.ENDE_XDC_USD_RATE',
+            'IMF/IFS/A.NGN.ENDE_XDC_USD_RATE',
+            'IMF/IFS/A.CHN.ENDE_XDC_USD_RATE'
+        ])
+    
+        self.df = pd.concat([self.cpi_df, self.fx_df])
         
     def clean_data(self): 
         super().clean_data()
