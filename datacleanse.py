@@ -122,20 +122,18 @@ class Fetcher(DataCleaner):
     def __init__(self, db_path):
         super().__init__(None, None, None, db_path)
         self.name = "Currency_Stability"
-        self.cpi_df = fetch_series([
-        'WorldBank/WDI/FP.CPI.TOTL.ZG-GHA',
-        'WorldBank/WDI/FP.CPI.TOTL.ZG-NGA',
-        'WorldBank/WDI/FP.CPI.TOTL.ZG-CHN'
-    ])
-    
-    
-        self.fx_df = fetch_series([
-            'IMF/IFS/A.GHA.ENDE_XDC_USD_RATE',
-            'IMF/IFS/A.NGN.ENDE_XDC_USD_RATE',
-            'IMF/IFS/A.CHN.ENDE_XDC_USD_RATE'
-        ])
-    
-        self.df = pd.concat([self.cpi_df, self.fx_df])
+        self.targets = {
+            'cpi': [
+                'WorldBank/WDI/FP.CPI.TOTL.ZG-GHA',
+                'WorldBank/WDI/FP.CPI.TOTL.ZG-NGA',
+                'WorldBank/WDI/FP.CPI.TOTL.ZG-CHN'
+            ],
+            'fx': [
+                'IMF/IFS/A.GHA.ENDE_XDC_USD_RATE',
+                'IMF/IFS/A.NGN.ENDE_XDC_USD_RATE',
+                'IMF/IFS/A.CHN.ENDE_XDC_USD_RATE'
+            ]
+        } # array of DBN codees to loop and test fetching
         
     def clean_data(self): 
         super().clean_data()
