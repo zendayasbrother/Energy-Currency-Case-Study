@@ -144,10 +144,18 @@ class Fetcher(DataCleaner):
         for category, code_list in data_map.items():
             for code in code_list:
                 try:
-                    df = fetch_series(code)
-                    self.standardize_columns()
+                    # Fetch series return: list, dict, etc.
+                    result = fetch_series(code)
+                    if isinstance(result, pd.DataFrame):
+                        df = result
+                    else:
+                        df = pd.DataFrame(result)
+                    
                     df['type'] = category
-                    frame.append(df)
+                    
+                    self.df = df 
+                    self.standardize_columns()
+                    frame.append(self.df)
                 except Exception as e:
                     print(f"Error fetching {code}: {e}")
                     
@@ -155,6 +163,8 @@ class Fetcher(DataCleaner):
         if frame:
             self.df = pd.concat(frame, ignore_index=True)
             print(f"Successfully ingested {len(frame)} series.")
+        else:
+            print("No data could be ingested.")
         
         
     def clean_data(self): 

@@ -29,7 +29,7 @@ def trilateral_analysis():
     fetch = Fetcher(db_path)
     try:
         cleaner.fetch_api(countries)
-        clean.clean_data()
+        cleaner.clean_data()
         cleaner.connect_database(db_path=None) # bilateral trade
         
         fetch.fetch_all()
