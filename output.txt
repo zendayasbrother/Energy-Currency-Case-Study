@@ -1,0 +1,77 @@
+PS C:\Users\furyd\OneDrive\CS DANIEL O\PROGRAMMING\DS - RESEARCH PROJECT\Energy-Currency Case Study>  & 'c:\Users\furyd\AppData\Local\Python\pythoncore-3.14-64\python.exe' 'c:\Users\furyd\.vscode\extensions\ms-python.debugpy-2026.6.0-win32-x64\bundled\libs\debugpy\launcher' '57644' '--' 'main.py' 
+Initializing API fetch for Trilateral Analysis...
+DEBUG: URL found: True
+DEBUG: KEY found: True
+Successfully fetched 288
+Successfully fetched 566
+Successfully fetched 156
+CRITICAL ERROR during database push: (psycopg2.errors.InvalidSchemaName) schema ""Trade Intelligence"" does not exist
+LINE 2: CREATE TABLE """Trade Intelligence""".bilateral_trade (
+                     ^
+
+[SQL: 
+CREATE TABLE """Trade Intelligence""".bilateral_trade (
+        typecode TEXT, 
+        freqcode TEXT, 
+        refperiodid BIGINT, 
+        refyear BIGINT, 
+        refmonth BIGINT, 
+        period TEXT, 
+        reportercode BIGINT, 
+        reporteriso TEXT, 
+        reporterdesc TEXT, 
+        flowcode TEXT, 
+        flowdesc TEXT, 
+        partnercode BIGINT, 
+        partneriso TEXT, 
+        partnerdesc TEXT, 
+        partner2code BIGINT, 
+        partner2iso TEXT, 
+        partner2desc TEXT, 
+        classificationcode TEXT, 
+        classificationsearchcode TEXT, 
+        isoriginalclassification BOOLEAN, 
+        cmdcode TEXT, 
+        cmddesc TEXT, 
+        aggrlevel TEXT, 
+        isleaf TEXT, 
+        customscode TEXT, 
+        customsdesc TEXT, 
+        moscode TEXT, 
+        motcode BIGINT, 
+        motdesc TEXT, 
+        qtyunitcode BIGINT, 
+        qtyunitabbr TEXT, 
+        qty FLOAT(53), 
+        isqtyestimated BOOLEAN, 
+        altqtyunitcode BIGINT, 
+        altqtyunitabbr TEXT, 
+        altqty FLOAT(53), 
+        isaltqtyestimated BOOLEAN, 
+        netwgt FLOAT(53), 
+        isnetwgtestimated BOOLEAN, 
+        grosswgt FLOAT(53), 
+        isgrosswgtestimated BOOLEAN, 
+        cifvalue FLOAT(53), 
+        fobvalue FLOAT(53), 
+        primaryvalue FLOAT(53), 
+        legacyestimationflag BIGINT, 
+        isreported BOOLEAN, 
+        isaggregate BOOLEAN
+)
+
+]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Running full analysis:
+       refperiodid  refyear  refmonth  ...      fobvalue  primaryvalue  legacyestimationflag
+count         32.0     32.0      32.0  ...  1.000000e+01  3.200000e+01              32.00000
+mean    20230101.0   2023.0      52.0  ...  8.524363e+09  1.324588e+10               0.18750
+std            0.0      0.0       0.0  ...  1.549032e+10  5.991277e+10               1.06066
+min     20230101.0   2023.0      52.0  ...  8.438021e+08  1.596370e+02               0.00000
+25%     20230101.0   2023.0      52.0  ...  3.984855e+09  9.361810e+03               0.00000
+50%     20230101.0   2023.0      52.0  ...  3.984855e+09  1.223450e+08               0.00000
+75%     20230101.0   2023.0      52.0  ...  3.984855e+09  3.984855e+09               0.00000
+max     20230101.0   2023.0      52.0  ...  5.252099e+10  3.376447e+11               6.00000
+
+[8 rows x 15 columns]
+PS C:\Users\furyd\OneDrive\CS DANIEL O\PROGRAMMING\DS - RESEARCH PROJECT\Energy-Currency Case Study> 

@@ -2,9 +2,6 @@
 .env
 .venv
 
-# ignore log of output for analysis
-output.txt
-
 # Ignore Python cache
 __pycache__/
 
