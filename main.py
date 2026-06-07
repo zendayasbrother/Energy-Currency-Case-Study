@@ -16,6 +16,7 @@ def trilateral_analysis():
     api_url = os.environ.get('UNCOM_URL')
     api_key = os.environ.get('UNCOM_KEY')
     db_path = os.environ.get('DB_PATH')
+    countries = [288, 566, 156]
     
     print(f"DEBUG: URL found: {api_url is not None}")
     print(f"DEBUG: KEY found: {api_key is not None}")
@@ -28,7 +29,13 @@ def trilateral_analysis():
     fetch = Fetcher(db_path)
     try:
         cleaner.fetch_api(countries)
-        cleaner.connect_database(db_path=None)
+        clean.clean_data()
+        cleaner.connect_database(db_path=None) # bilateral trade
+        
+        fetch.fetch_all()
+        fetch.clean_data()
+        fetch.connect_database() # monetary
+        
         # Engine orchestration 
         engine = DataEngine(cleaner_ins = cleaner)
         engine.run_analysis() # later dev
@@ -37,6 +44,7 @@ def trilateral_analysis():
     
 def run_swat(): 
     trilateral_analysis() # run UI, in this case -- run terminal interface for the website demo
+    print("Hello, and welcome to SWAT: a computational demonstration of the trilateral relationship of China, Nigeria, and Ghana.")
 
 if __name__ == "__main__":
     run_swat()

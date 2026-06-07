@@ -19,14 +19,12 @@ class DataCleaner:
         self.api_url = api_url
         self.db_path = db_path
         self.name = "bilateral_trade"
-        self.df = None
-        countries = [288, 566, 156]
+        self.df = []
+        self.countries = countries
 
 
-    def fetch_api(self, country_list):
-        dfs = []
-        
-        for country in country_list:
+    def fetch_api(self, countries):
+        for country in countries:
             params = {
                 "reporterCode": str(country), # Ensure each request is handled individually
                 "partnerCode": "0",
@@ -44,7 +42,7 @@ class DataCleaner:
                     data = result.get('dataset') or result.get('data')
                     
                     if data:
-                        dfs.append(pd.json_normalize(data))
+                        self.df.append(pd.json_normalize(data))
                         print(f"Successfully fetched {country}")
                     else:
                         print(f"No data found for {country}")
@@ -59,8 +57,8 @@ class DataCleaner:
                 
             time.sleep(1.1) # Respect API rate limits (1 request/sec)
 
-        if dfs:
-            self.df = pd.concat(dfs, ignore_index=True)
+        if self.df:
+            self.df = pd.concat(self.df, ignore_index=True)
             self.standardize_columns()
         else:
             raise Exception("No data could be retrieved.")
@@ -101,7 +99,7 @@ class DataCleaner:
 
         try:
             with self.engine.begin() as conn:
-                self.schema = '"Trade Intelligence"'
+                self.schema = 'Trade Intelligence'
                 
                 self.df.to_sql(
                     name = self.name,
