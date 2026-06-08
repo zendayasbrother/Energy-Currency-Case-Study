@@ -6,8 +6,7 @@ import requests
 import json
 import time
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
-from dbnomics import fetch_series 
+from sqlalchemy import create_engine
 import importlib.metadata
     
 load_dotenv()
@@ -92,7 +91,7 @@ class DataCleaner:
         pass # Sub function for formatting - prints the formatted version via lamda function
     
     # function(s) to save / push api to database for ease. access via env
-    def connect_database(self, db_path=None):
+    def connect_database(self, db_path = None):
         if self.df is None or self.df.empty:
             print("No data to push.")
             return
@@ -117,54 +116,88 @@ class DataCleaner:
     in a modular manner, then test it """
 
 class Fetcher(DataCleaner): 
-    def __init__(self, db_path):
+    def __init__(self, dbn_url, db_path):
         super().__init__(None, None, None, db_path)
+        self.dbn_url = dbn_url
         self.name = "Currency_Stability"
+        self.df = []
         self.curr_inf = [
-                'WorldBank/WDI/FP.CPI.TOTL.ZG-GHA',
-                'WorldBank/WDI/FP.CPI.TOTL.ZG-NGA',
-                'WorldBank/WDI/FP.CPI.TOTL.ZG-CHN'
-            ] # inflation (% change)
+                'WB/WDI/FP.CPI.TOTL.ZG-GH',  # Inflation (% annual) - Ghana
+                'WB/WDI/FP.CPI.TOTL.ZG-NG',  # Inflation (% annual) - Nigeria
+                'WB/WDI/FP.CPI.TOTL.ZG-CN'   # Inflation (% annual) - China
+            ]
         
+        # FIXED: Changed 'IMF/IFS/A.GHA...' to the standard 2-digit ISO IMF ledger mapping.
         self.fx = [
-                'IMF/IFS/A.GHA.ENDE_XDC_USD_RATE',
-                'IMF/IFS/A.NGN.ENDE_XDC_USD_RATE',
-                'IMF/IFS/A.CHN.ENDE_XDC_USD_RATE'
-            ] # exchange rates
+                'IMF/IFS/A.GH.ENDE_XDC_USD_RATE',  # Exchange Rate - Ghana
+                'IMF/IFS/A.NG.ENDE_XDC_USD_RATE',  # Exchange Rate - Nigeria
+                'IMF/IFS/A.CN.ENDE_XDC_USD_RATE'   # Exchange Rate - China
+            ]
+        
         
     def fetch_all(self):
-        # Mapping connection
-        data_map = {
-            'inflation': self.curr_inf,
-            'exchange_rate': self.fx
-        }
+        dbn_url = self.dbn_url.rstrip('/')
+        url = f"{dbn_url}/series"
         
-        frame = []
+        # Combine strings into unified, qualified path references
+        targets = self.curr_inf + self.fx
+        params = {"series_ids": ",".join(targets)}
         
-        for category, code_list in data_map.items():
-            for code in code_list:
-                try:
-                    # Fetch series return: list, dict, etc
-                    result = fetch_series(code)
-                    if isinstance(result, pd.DataFrame):
-                        df = result
-                    else:
-                        df = pd.DataFrame(result)
-                    
-                    df['type'] = category
-                    self.df = df 
-                    self.standardize_columns()
-                    
-                    frame.append(self.df)
-                except Exception as e:
-                    print(f"Error fetching {code}: {e}")
-                    
-        # Post fetching concatenation
-        if frame:
-            self.df = pd.concat(frame, ignore_index=True)
-            print(f"Successfully ingested {len(frame)} series.")
-        else:
-            print("No data could be ingested.") # fix whole DBN fetching
+        frames = []
+        print(f"Executing batch ingestion from DB Nomics registry gateway...")
+        
+        try:
+            response = requests.get(url, params=params, timeout=30)
+            
+            if response.status_code != 200:
+                raise Exception(f"DB Nomics Gateway rejected request with HTTP status: {response.status_code}")
+
+            data = response.json()
+            series_data = data.get("series", {})
+            docs = series_data.get("docs", [])
+
+            if not docs:
+                raise Exception("API Gateway returned an empty registry dataset matching these codes.")
+
+            for doc in docs:
+                # Resolve the global identifiers safely from the returned payload mapping
+                provider_code = doc.get("provider_code")
+                dataset_code = doc.get("dataset_code")
+                series_code = doc.get("series_code")
+                
+                periods = doc.get("period", [])
+                values = doc.get("value", [])
+
+                if not periods or not values:
+                    continue
+
+                df = pd.DataFrame({
+                    "period": periods,
+                    "value": values
+                })
+
+                df["value"] = pd.to_numeric(df["value"], errors="coerce")
+                
+                signature = f"{provider_code}/{dataset_code}/{series_code}"
+                df["series_code"] = signature
+                
+                if signature in self.curr_inf:
+                    df["type"] = "inflation"
+                else:
+                    df["type"] = "exchange_rate"
+
+                frames.append(df)
+                print(f"-> Successfully synchronized series: {signature}")
+
+        except Exception as e:
+            print(f"Pipeline processing failed: {e}")
+
+        if not frames:
+            raise Exception("Critical: No matching dataframes resolved from DB Nomics query dimensions.")
+
+        self.df = pd.concat(frames, ignore_index=True)
+        self.standardize_columns()
+        print(f"Total metrics layers loaded successfully: {len(frames)}")
         
         
     def clean_data(self): 

@@ -3,6 +3,7 @@ from datacleanse import DataCleaner, Fetcher
 from engine import DataEngine
 from pathlib import Path
 from dotenv import load_dotenv
+import requests
 
 base_path = Path(__file__).resolve().parent
 env_path = base_path / '.env'
@@ -15,18 +16,21 @@ def trilateral_analysis():
     countries = ["288", "566", "156"]       
     api_url = os.environ.get('UNCOM_URL')
     api_key = os.environ.get('UNCOM_KEY')
+    dbn_url = os.environ.get('DBN_URL')
     db_path = os.environ.get('DB_PATH')
     countries = [288, 566, 156]
     
     print(f"DEBUG: URL found: {api_url is not None}")
     print(f"DEBUG: KEY found: {api_key is not None}")
+    print(f"DEBUG: Requesting URL: {dbn_url}")
+
     
     if api_url is None or api_key is None:
         print("CRITICAL ERROR: .env file isnt set properly")
         exit() # Stop execution
         
     cleaner = DataCleaner(api_url, api_key, countries, db_path)
-    fetch = Fetcher(db_path)
+    fetch = Fetcher(dbn_url, db_path)
     try:
         cleaner.fetch_api(countries)
         cleaner.clean_data()
