@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 import nashpy as nash
+from datacleanse import DataCleaner
 import json
 from sklearn.linear_model import LinearRegression 
 import statsmodels.api as sm
@@ -13,7 +14,8 @@ warnings.filterwarnings('ignore')
 # DataEngine is a composition class for orchestrating the math and game theory analysis 
 class DataEngine():
     def __init__(self, cleaner_ins):
-        self.df = cleaner_ins.df
+        cleaner = DataCleaner()
+        cleaner_ins = cleaner.clean_data() # what does the engine need? data for maths
 
     def run_analysis(self):
         print("\nRunning full analysis:")
