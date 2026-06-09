@@ -13,19 +13,16 @@ warnings.filterwarnings('ignore')
 # DataEngine is a composition class for orchestrating the math and game theory analysis 
 class DataEngine():
     def __init__(self, cleaner_ins):
-        if cleaner_ins is None or cleaner_ins.df is None:
-            raise ValueError("DataEngine requires a cleaner instance with populated data.")
-        self.cleaner = cleaner_ins
-        self.df = self.cleaner.df 
-        
+        self.df = cleaner_ins.df
+
     def run_analysis(self):
-        print("Running full analysis:")
-        print(self.df.describe())
-        pass  # Placeholder for my EDA  logic
-        return self.df.describe()
+        print("\nRunning full analysis:")
+        if self.df is not None and not self.df.empty:
+            print(self.df.describe())
+            return self.df.describe()
+        else:
+            print("No data present inside the engine to analyze.")
+            return None
 
     def run_game_theory(self):
-        # Placeholder for my nashpy logic
-        pass 
-
-        
+        pass
