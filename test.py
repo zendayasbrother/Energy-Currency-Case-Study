@@ -4,13 +4,13 @@ import pandas as pd
 import os
 from unittest.mock import MagicMock
 from datacleanse import DataCleaner, Fetcher
-from engine import DataEngin
+from engine import DataEngine
 
 @pytest.fixture
 def mock_cleaner():
     cleaner = DataCleaner()
     cleaner.fetch_all = MagicMock(return_value=pd.DataFrame({'a': [1, None]}))
-    return cleaner # unsure about mock since i wanna test with the official data, yeah
+    return cleaner
 
 # Unit Testing
 def test_cleaner_removes_nans(mock_cleaner):

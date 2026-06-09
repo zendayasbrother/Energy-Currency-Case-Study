@@ -59,6 +59,7 @@ class DataCleaner:
         if frames:
             self.df = pd.concat(frames, ignore_index=True)
             self.standardise_columns()
+            self.clean_data()
         else:
             raise Exception("No data could be retrieved.")
     
@@ -170,6 +171,7 @@ class Fetcher(DataCleaner):
             self.df = df_cleaned
             print(f"-> Successfully synchronized series from WB and IMF.")
             self.standardise_columns()
+            self.clean_data()
 
         except Exception as e:
             raise Exception(f"Critical pipeline error: {e}")
