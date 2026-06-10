@@ -79,11 +79,9 @@ class DataCleaner:
         print(f"Initial Dimensions: {self.df.shape}")
 
 
-        print("\n--- Data Audit ---")
+        print("\n--- Data Audit ft. First 10 rows ---")
         print(self.df.head(10))
         print(self.df.tail(5))
-        print("\n--- First 10 rows ---")
-        print(self.df.head(10))
         print(self.df.shape)
         self.df = self.df.fillna(0)
 
@@ -97,7 +95,7 @@ class DataCleaner:
         # 1. PRE-CLEANING RAW DATASET PREVIEW
         # 2. RUN CLEANING PROCESS
         # 3. POST-CLEANING PROCESSED DATASET PREVIEW
-        # FORMAT and FINAL REPORT
+        # FORMAT and FINAL REPORT (add more stats for inspection here or engine and a formatting sub function (?))
    
     
     # function(s) to save / push api to database for ease. access via env
@@ -122,7 +120,7 @@ class DataCleaner:
         except Exception as e:
             print(f"CRITICAL ERROR during database push: {e}")
             
-    """ Repeat the same ETL process but with DBNomices and monetary data
+    """ Repeat the same ETL process but with DBNomics and monetary data
     in a modular manner, then test it """
 
 class Fetcher(DataCleaner): 
