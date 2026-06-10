@@ -37,7 +37,7 @@ def trilateral_analysis():
         fetch.fetch_all()
         fetch.connect_database()
     except Exception as e:
-        print(f"DBNomics Pipeline failed: {e}")
+        print(f"DBNomics Pipeline failed: {e}") # move to Engine's __init__ block
 
     try:
         # Engine Orchestration
