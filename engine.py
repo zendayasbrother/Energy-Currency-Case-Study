@@ -13,9 +13,9 @@ warnings.filterwarnings('ignore')
 
 # DataEngine is a composition class for orchestrating the math and game theory analysis 
 class DataEngine:
-    def __init__(self, cleaner, fetch, countries, db_path):
-        self.cleaner = cleaner
-        self.fetch = fetch
+    def __init__(self, cleaner, fetch, countries):
+        self.cleaner = DataCleaner() # make a proper instance
+        self.fetch = Fetcher()
         
         try:
             uncom = self.cleaner.fetch_api(countries) # what does the engine need? data for maths
@@ -23,7 +23,7 @@ class DataEngine:
             
             self.df = pd.concat([uncom, dbnomics], ignore_index=True)
         except Exception as e:
-            print(f"UNCOM or DBnomics Pipeline failed: {e}") # might move to engine.py
+            print(f"UNCOM or DBnomics Pipeline failed: {e}") # might change to if condition
         
 
     def run_analysis(self, cleaner, df):

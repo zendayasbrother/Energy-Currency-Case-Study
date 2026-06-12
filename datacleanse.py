@@ -185,6 +185,6 @@ class Fetcher(DataCleaner):
         super().clean_data()
 
     def connect_database(self):
-        super().connect_database() 
+        super().connect_database() # maybe change cleaning approach
         
     # Future JSON object
