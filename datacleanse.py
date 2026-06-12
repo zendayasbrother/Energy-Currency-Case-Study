@@ -60,6 +60,7 @@ class DataCleaner:
             self.df = pd.concat(frames, ignore_index=True)
             self.standardise_columns()
             self.clean_data()
+            return self.df
         else:
             raise Exception("No data could be retrieved.")
     
@@ -124,11 +125,11 @@ class DataCleaner:
     in a modular manner, then test it """
 
 class Fetcher(DataCleaner): 
-    def __init__(self, db_path):
+    def __init__(self, df, db_path):
         super().__init__(db_path = db_path)
         self.name = "Currency_Stability"
-        self.df = pd.DataFrame() 
-
+        self.df = df
+        
     def fetch_all(self): 
         print(f"Executing batch ingestion from DB Nomics...")
 
@@ -176,7 +177,7 @@ class Fetcher(DataCleaner):
             print(f"-> Successfully synchronized series from WB and IMF.")
             self.standardise_columns()
             self.clean_data()
-
+            return self.df
         except Exception as e:
             raise Exception(f"Critical pipeline error: {e}")
         

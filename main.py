@@ -26,18 +26,6 @@ def trilateral_analysis():
 
     cleaner = DataCleaner(db_path=db_path, api_url=api_url, api_key=api_key, countries=countries)
     fetch = Fetcher(db_path=db_path)
-    
-    try:
-        cleaner.fetch_api(countries)
-        cleaner.connect_database()
-    except Exception as e:
-        print(f"UN Comtrade Pipeline failed: {e}")
-
-    try:
-        fetch.fetch_all()
-        fetch.connect_database()
-    except Exception as e:
-        print(f"DBNomics Pipeline failed: {e}") # move to Engine's __init__ block
 
     try:
         # Engine Orchestration
