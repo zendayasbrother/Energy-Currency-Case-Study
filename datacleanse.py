@@ -24,8 +24,8 @@ class DataCleaner:
             params = {
                 "reporterCode": str(country), # Ensure each request is handled individually
                 "partnerCode": "0",
-                "period": "2023",
-                "cmdCode": "2709"
+                "period": "2014,2015,2016,2017,2019,2020,2021,2022,2023,2024",
+                "cmdCode": "854143,271600"
             }
             
             headers = {"Ocp-Apim-Subscription-Key": self.api_key}
@@ -80,24 +80,22 @@ class DataCleaner:
         print(f"Initial Dimensions: {self.df.shape}")
 
 
-        print("\n--- Data Audit ft. First 10 rows ---")
-        print(self.df.head(10))
-        print(self.df.tail(5))
-        print(self.df.shape) # cap period to expected timeline
+        print("\n--- Data Audit ---")
+        print(self.df.head())
+        print(self.df.shape)
 
         numeric_cols = self.df.select_dtypes(include=['number']).columns
         self.df[numeric_cols] = self.df[numeric_cols].fillna(0)
         metadata_cols = [
             'refperiodid', 'refyear', 'refmonth', 'period', 'date',
             'reportercode', 'partnercode', 'partner2code', 
-            'motcode', 'qtyunitcode', 'altqtyunitcode', 'legacyestimationflag'
+            'motcode', 'qtyunitcode', 'grosswgt', 'altqtyunitcode', 'legacyestimationflag', 'year'
         ]
         
         print("\n--- Data Types ---")
         print(self.df.dtypes)
         print(self.df.info())
         self.df = self.df.drop(columns=metadata_cols, errors='ignore')
-        print(self.df.describe())
 
         pass # Sub function for formatting - prints the formatted version via lamda function
     
@@ -135,7 +133,7 @@ class DataCleaner:
 class Fetcher(DataCleaner): 
     def __init__(self, db_path):
         super().__init__(db_path = db_path)
-        self.name = "Currency_Stability"
+        self.name = "Currency_Stability" # period initialisation pending
         
     def fetch_all(self): 
         print(f"Executing batch ingestion from DB Nomics...")
@@ -172,13 +170,10 @@ class Fetcher(DataCleaner):
                 }
             )
 
-            df_cleaned["type"] = df_cleaned["series_code"].apply(
-                lambda x: (
-                    "inflation"
-                    if "FP.CPI" in str(x)
-                    else "exchange_rate"
-                )
-            )
+            df_cleaned["type"] = np.where(df_cleaned["series_code"].str.contains("FP.CPI", na=False), "inflation", "exchange_rate")
+    
+            df_cleaned["year"] = pd.to_datetime(df_cleaned["period"]).dt.year
+            df_cleaned = df_cleaned[df_cleaned["year"].between(2014, 2024)]
             
             self.df = df_cleaned
             print(f"-> Successfully synchronized series from WB and IMF.")
@@ -192,6 +187,6 @@ class Fetcher(DataCleaner):
         super().clean_data()
 
     def connect_database(self):
-        super().connect_database() # maybe change cleaning approach
+        super().connect_database() # change to pull mechanism post-engine
         
     # Future JSON object

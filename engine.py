@@ -22,7 +22,34 @@ class DataEngine:
             uncom = self.cleaner.fetch_api(countries) # what does the engine need? data for maths
             dbnomics = self.fetch.fetch_all()
             
-            self.df = pd.concat([uncom, dbnomics], ignore_index=True)
+            if uncom is not None and not uncom.empty and dbnomics is not None and not dbnomics.empty:
+                print("\nSynchronizing timelines and merging datasets horizontally...")
+                
+                uncom_iso_map = {156: "CHN", 566: "NGA", 288: "GHA"}
+                uncom['country_iso'] = uncom['reportercode'].map(uncom_iso_map)
+                uncom['year'] = uncom['refyear'].astype(int)
+                
+                def extract_iso(series_code):
+                    code = str(series_code).upper()
+                    if "CHN" in code or code.endswith("CN"): return "CHN"
+                    if "NGA" in code or code.endswith("NG"): return "NGA"
+                    if "GHA" in code or code.endswith("GH"): return "GHA"
+                    return None
+                
+                dbnomics['country_iso'] = dbnomics['series_code'].apply(extract_iso)
+                dbnomics['year'] = dbnomics['year'].astype(int)
+                
+                db_pivoted = dbnomics.pivot_table(
+                    index=['year', 'country_iso'],
+                    columns='type',
+                    values='value',
+                    aggfunc='first'
+                ).reset_index()
+                
+                self.df = pd.merge(uncom, db_pivoted, on=['year', 'country_iso'], how='left')
+                print(f"-> Matrix synchronized successfully! Matrix shape: {self.df.shape}")
+            else:
+                self.df = uncom if uncom is not None else dbnomics
         except Exception as e:
             print(f"UNCOM or DBnomics Pipeline failed: {e}") # might change to if condition
         
@@ -31,9 +58,9 @@ class DataEngine:
         print("\nRunning full analysis:")
         if self.df is not None and not self.df.empty:
             metadata_cols = [
-                'refperiodid', 'refyear', 'refmonth', 'period', 'date',
-                'reportercode', 'partnercode', 'partner2code', 
-                'motcode', 'qtyunitcode', 'altqtyunitcode', 'legacyestimationflag'
+            'refperiodid', 'refyear', 'refmonth', 'period', 'date',
+            'reportercode', 'partnercode', 'partner2code', 
+            'motcode', 'qtyunitcode', 'grosswgt', 'altqtyunitcode', 'legacyestimationflag', 'year'
             ]
             df = self.df.drop(columns=metadata_cols, errors='ignore')
             
@@ -45,9 +72,9 @@ class DataEngine:
             stats_summary.loc['75% quartiles'] = df.quantile(0.75, numeric_only=True)
             
             self.corr = df.corr(numeric_only=True)
-            
             print(stats_summary)
-            return stats_summary, self.corr 
+            print(self.corr)
+            return stats_summary, self.corr
         else:
             print("No data present inside the engine to analyze.")
             return None
