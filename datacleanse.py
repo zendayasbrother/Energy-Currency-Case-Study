@@ -83,12 +83,20 @@ class DataCleaner:
         print("\n--- Data Audit ft. First 10 rows ---")
         print(self.df.head(10))
         print(self.df.tail(5))
-        print(self.df.shape)
-        self.df = self.df.fillna(0)
+        print(self.df.shape) # cap period to expected timeline
 
+        numeric_cols = self.df.select_dtypes(include=['number']).columns
+        self.df[numeric_cols] = self.df[numeric_cols].fillna(0)
+        metadata_cols = [
+            'refperiodid', 'refyear', 'refmonth', 'period', 'date',
+            'reportercode', 'partnercode', 'partner2code', 
+            'motcode', 'qtyunitcode', 'altqtyunitcode', 'legacyestimationflag'
+        ]
+        
         print("\n--- Data Types ---")
         print(self.df.dtypes)
         print(self.df.info())
+        self.df = self.df.drop(columns=metadata_cols, errors='ignore')
         print(self.df.describe())
 
         pass # Sub function for formatting - prints the formatted version via lamda function
@@ -125,10 +133,9 @@ class DataCleaner:
     in a modular manner, then test it """
 
 class Fetcher(DataCleaner): 
-    def __init__(self, df, db_path):
+    def __init__(self, db_path):
         super().__init__(db_path = db_path)
         self.name = "Currency_Stability"
-        self.df = df
         
     def fetch_all(self): 
         print(f"Executing batch ingestion from DB Nomics...")

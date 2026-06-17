@@ -14,8 +14,9 @@ warnings.filterwarnings('ignore')
 # DataEngine is a composition class for orchestrating the math and game theory analysis 
 class DataEngine:
     def __init__(self, cleaner, fetch, countries):
-        self.cleaner = DataCleaner() # make a proper instance
-        self.fetch = Fetcher()
+        self.cleaner = cleaner 
+        self.fetch = fetch
+        self.df = pd.DataFrame()
         
         try:
             uncom = self.cleaner.fetch_api(countries) # what does the engine need? data for maths
@@ -26,19 +27,27 @@ class DataEngine:
             print(f"UNCOM or DBnomics Pipeline failed: {e}") # might change to if condition
         
 
-    def run_analysis(self, cleaner, df):
-        df = self.df
+    def run_analysis(self):
         print("\nRunning full analysis:")
-        if self.df is not None and not df.empty:
-            cleaner.clean_data(df)
-            stats = df.describe()
-            stats.loc['median'] = df.median(numeric_only=True)
-            stats.loc['var'] = df.var(numeric_only=True)
-            stats.loc['skew'] = df.skew(numeric_only=True)
-            stats.loc['25% quartiles'] = df.quantile(0.25, numeric_only=True)
-            stats.loc['75% quartiles'] = df.quantile(0.75, numeric_only=True)
+        if self.df is not None and not self.df.empty:
+            metadata_cols = [
+                'refperiodid', 'refyear', 'refmonth', 'period', 'date',
+                'reportercode', 'partnercode', 'partner2code', 
+                'motcode', 'qtyunitcode', 'altqtyunitcode', 'legacyestimationflag'
+            ]
+            df = self.df.drop(columns=metadata_cols, errors='ignore')
+            
+            stats_summary = df.describe()
+            stats_summary.loc['median'] = df.median(numeric_only=True)
+            stats_summary.loc['var'] = df.var(numeric_only=True)
+            stats_summary.loc['skew'] = df.skew(numeric_only=True)
+            stats_summary.loc['25% quartiles'] = df.quantile(0.25, numeric_only=True)
+            stats_summary.loc['75% quartiles'] = df.quantile(0.75, numeric_only=True)
+            
             self.corr = df.corr(numeric_only=True)
-            return stats, self.corr # (add more stats for inspection here)
+            
+            print(stats_summary)
+            return stats_summary, self.corr 
         else:
             print("No data present inside the engine to analyze.")
             return None
