@@ -67,10 +67,6 @@ class DataEngine:
             df = self.df[analysis_cols]
             
             stats_summary = df.describe()
-            stats_summary.loc['median'] = stats_summary.loc['50%']
-            stats_summary.loc['25% quartiles'] = stats_summary.loc['25%']
-            stats_summary.loc['75% quartiles'] = stats_summary.loc['75%']
-
             stats_summary.loc['var'] = df.var(numeric_only=True)
             stats_summary.loc['skew'] = df.skew(numeric_only=True)
             
@@ -85,8 +81,12 @@ class DataEngine:
         # might put the spearman and other mathematical tests under here via an instance then a seperate function
         
         
-    def spear_tests(self):
-        pass
+    def speartests(self):
+        spearman_gha = float(self.df['x'].corr(self.df['y'], method='spearman'))
+        spearman_nga = float(self.df['x'].corr(self.df['y'], method='spearman'))
+        spearman_chn = float(self.df['x'].corr(self.df['y'], method='spearman')) # spearman for trilateral relationship
+        
+        
         
 
     def run_game_theory(self):
