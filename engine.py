@@ -46,7 +46,12 @@ class DataEngine:
                     aggfunc='first'
                 ).reset_index()
                 
-                self.df = pd.merge(uncom, db_pivoted, on=['year', 'country_iso'], how='left')
+                uncom_annual = uncom.groupby(['year', 'country_iso'], as_index=False).agg({
+                    'primaryvalue': 'sum',
+                    'qty': 'sum'
+                })
+
+                self.df = pd.merge(uncom_annual, db_pivoted, on=['year', 'country_iso'], how='inner')
                 print(f"-> Matrix synchronized successfully! Matrix shape: {self.df.shape}")
             else:
                 self.df = uncom if uncom is not None else dbnomics
@@ -57,19 +62,17 @@ class DataEngine:
     def run_analysis(self):
         print("\nRunning full analysis:")
         if self.df is not None and not self.df.empty:
-            metadata_cols = [
-            'refperiodid', 'refyear', 'refmonth', 'period', 'date',
-            'reportercode', 'partnercode', 'partner2code', 
-            'motcode', 'qtyunitcode', 'grosswgt', 'altqtyunitcode', 'legacyestimationflag', 'year'
-            ]
-            df = self.df.drop(columns=metadata_cols, errors='ignore')
+            # Inside datacleanse.py -> DataCleaner.clean_data()
+            analysis_cols = [col for col in self.df.columns if col not in ['year', 'country_iso']]
+            df = self.df[analysis_cols]
             
             stats_summary = df.describe()
-            stats_summary.loc['median'] = df.median(numeric_only=True)
+            stats_summary.loc['median'] = stats_summary.loc['50%']
+            stats_summary.loc['25% quartiles'] = stats_summary.loc['25%']
+            stats_summary.loc['75% quartiles'] = stats_summary.loc['75%']
+
             stats_summary.loc['var'] = df.var(numeric_only=True)
             stats_summary.loc['skew'] = df.skew(numeric_only=True)
-            stats_summary.loc['25% quartiles'] = df.quantile(0.25, numeric_only=True)
-            stats_summary.loc['75% quartiles'] = df.quantile(0.75, numeric_only=True)
             
             self.corr = df.corr(numeric_only=True)
             print(stats_summary)

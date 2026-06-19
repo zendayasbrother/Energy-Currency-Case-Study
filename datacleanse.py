@@ -24,7 +24,7 @@ class DataCleaner:
             params = {
                 "reporterCode": str(country), # Ensure each request is handled individually
                 "partnerCode": "0",
-                "period": "2014,2015,2016,2017,2019,2020,2021,2022,2023,2024",
+                "period": "2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024",
                 "cmdCode": "854143,271600"
             }
             
@@ -65,7 +65,7 @@ class DataCleaner:
             raise Exception("No data could be retrieved.")
     
     def standardise_columns(self):
-        if self.df is not None and not self.df.empty:
+        if self.df is not None and len(self.df.columns) > 0:
             self.df.columns = (
                 self.df.columns.str.strip()
                 .str.replace(' ', '_')
@@ -73,7 +73,6 @@ class DataCleaner:
                 .str.replace('-', '_')
                 .str.lower()
             )
-        
         return self.df
 
     def clean_data(self):
@@ -86,10 +85,12 @@ class DataCleaner:
 
         numeric_cols = self.df.select_dtypes(include=['number']).columns
         self.df[numeric_cols] = self.df[numeric_cols].fillna(0)
+        # Inside datacleanse.py -> DataCleaner.clean_data()
         metadata_cols = [
-            'refperiodid', 'refyear', 'refmonth', 'period', 'date',
-            'reportercode', 'partnercode', 'partner2code', 
-            'motcode', 'qtyunitcode', 'grosswgt', 'altqtyunitcode', 'legacyestimationflag', 'year'
+            'refperiodid', 'refmonth', 'period', 'date',
+            'partnercode', 'partner2code', 'motcode', 'qtyunitcode', 
+            'grosswgt', 'altqtyunitcode', 'legacyestimationflag'
+            # 'reportercode' and 'refyear' removed from here!
         ]
         
         print("\n--- Data Types ---")
