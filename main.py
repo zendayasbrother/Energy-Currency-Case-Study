@@ -31,6 +31,7 @@ def trilateral_analysis():
         # Engine Orchestration
         engine = DataEngine(cleaner, fetch, countries)
         engine.run_analysis()
+        engine.speartests()
     except Exception as e:
         print(f"Analytical Engine Pipeline failed: {e}")
 
