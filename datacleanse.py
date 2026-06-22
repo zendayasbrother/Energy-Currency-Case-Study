@@ -25,7 +25,7 @@ class DataCleaner:
                 "reporterCode": str(country), # Ensure each request is handled individually
                 "partnerCode": "0",
                 "period": "2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024",
-                "cmdCode": "854143,271600"
+                "cmdCode": "854143,271600" # solar, electricity codes
             }
             
             headers = {"Ocp-Apim-Subscription-Key": self.api_key}
@@ -90,7 +90,6 @@ class DataCleaner:
             'refperiodid', 'refmonth', 'period', 'date',
             'partnercode', 'partner2code', 'motcode', 'qtyunitcode', 
             'grosswgt', 'altqtyunitcode', 'legacyestimationflag'
-            # 'reportercode' and 'refyear' removed from here!
         ]
         
         print("\n--- Data Types ---")
