@@ -26,12 +26,13 @@ def trilateral_analysis():
 
     cleaner = DataCleaner(db_path=db_path, api_url=api_url, api_key=api_key, countries=countries)
     fetch = Fetcher(db_path=db_path)
+    engine = DataEngine(cleaner, fetch)
 
     try:
         # Engine Orchestration
-        engine = DataEngine(cleaner, fetch, countries, db_path)
+        engine.sync_matrix(countries)
         engine.run_stats()
-        engine.speartests()
+        engine.run_corr()
     except Exception as e:
         print(f"Analytical Engine Pipeline failed: {e}")
 
