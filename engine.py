@@ -15,9 +15,9 @@ warnings.filterwarnings('ignore')
 
 # DataEngine is a composition class for orchestrating the math and game theory analysis
 class DataEngine:
-    def __init__(self, cleaner, fetch):
+    def __init__(self, cleaner, fetcher):
         self.cleaner = cleaner
-        self.fetch = fetch
+        self.fetcher = fetcher
         self.df = pd.DataFrame()
         
         self.metadata_cols = [
@@ -65,19 +65,23 @@ class DataEngine:
     def meta_clean(self): 
         if self.df is None or self.df.empty:
             return pd.DataFrame()
-        df_numeric = self.df.select_dtypes(include=[np.number])
-        period_cols = [col for col in df_numeric.columns if col not in self.metadata_cols]
-        df = df_numeric[period_cols]
-        return df
+        self.cleaner.clean_data()
 
-    def run_stats(self, df):
+    def run_stats(self):
         print("\nRunning full analysis:")
         self.df = self.meta_clean()
         if self.df.empty:
             print("Error: No matrix data present inside the engine to analyse.")
             return None
         
+        df = self.df
+        print(f"Initial Dimensions: {df.shape}")
+        print("\n--- Data Audit ft. First 10 rows ---")
+        print(df.head())
         
+        print("\n--- Data Types ---")
+        print(self.df.dtypes)
+        print(self.df.info())
         stats_summary = df.describe()
         stats_summary.loc['var'] = df.var(numeric_only=True)
         stats_summary.loc['skew'] = df.skew(numeric_only=True)
@@ -102,7 +106,7 @@ class DataEngine:
             combined_cols = list(set(energy_cols + target_cols))
             corr_matrix = df[combined_cols].corr()
             print(corr_matrix)
-            self.speartests(df)
+            self.speartests()
             return corr_matrix
         return None
        

@@ -25,8 +25,8 @@ def trilateral_analysis():
         return
 
     cleaner = DataCleaner(db_path=db_path, api_url=api_url, api_key=api_key, countries=countries)
-    fetch = Fetcher(db_path=db_path)
-    engine = DataEngine(cleaner, fetch)
+    fetcher = Fetcher(db_path=db_path)
+    engine = DataEngine(cleaner=cleaner, fetcher=fetcher)
 
     try:
         # Engine Orchestration
