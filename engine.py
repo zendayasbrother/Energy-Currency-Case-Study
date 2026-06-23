@@ -31,7 +31,7 @@ class DataEngine:
     def sync_matrix(self, countries):
         try:
             uncom = self.cleaner.fetch_api(countries)
-            dbnomics = self.fetch.fetch_all()
+            dbnomics = self.fetcher.fetch_all()
         
             if uncom is None or uncom.empty or dbnomics is None or dbnomics.empty:
                 raise ValueError("Upstream extraction returned empty datasets.")
@@ -75,6 +75,7 @@ class DataEngine:
             return None
         
         df = self.df
+        df = df.drop(columns=self.metadata_cols, errors='ignore')
         print(f"Initial Dimensions: {df.shape}")
         print("\n--- Data Audit ft. First 10 rows ---")
         print(df.head())
@@ -106,16 +107,23 @@ class DataEngine:
             combined_cols = list(set(energy_cols + target_cols))
             corr_matrix = df[combined_cols].corr()
             print(corr_matrix)
-            self.speartests()
+            print(self.speartests())
             return corr_matrix
         return None
        
     def speartests(self):
-        spearman_gha = float(self.df['primaryvalue'].corr(self.df['value'], method='spearman'))
-        """spearman_nga = float(self.df['x'].corr(self.df['y'], method='spearman'))
-        spearman_chn = float(self.df['x'].corr(self.df['y'], method='spearman'))"""
+        gha_df = self.df[self.df['iso'] == 'GHA']
+        nga_df = self.df[self.df['iso'] == 'NGA']
+        chn_df = self.df[self.df['iso'] == 'CHN']
+
+        spearman_gha = float(gha_df['primaryvalue'].corr(gha_df['inflation'], method='spearman'))
+        spearman_nga = float(nga_df['primaryvalue'].corr(nga_df['inflation'], method='spearman'))
+        spearman_chn = float(chn_df['primaryvalue'].corr(chn_df['inflation'], method='spearman'))
 
         return {
-            "Spearman (GHA)": round(spearman_gha, 4)} 
+            "Spearman Primary Value vs Inflation (GHA)": round(spearman_gha, 4),
+            "Spearman Primary Value vs Inflation (NGA)": round(spearman_nga, 4),
+            "Spearman Primary Value vs Inflation (CHN)": round(spearman_chn, 4)
+        }
     def run_game_theory(self):
         pass
