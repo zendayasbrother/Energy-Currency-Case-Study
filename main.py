@@ -33,6 +33,8 @@ def trilateral_analysis():
         engine.sync_matrix(countries)
         engine.run_stats()
         engine.run_corr()
+        cleaner.connect_database()
+        fetcher.connect_database()
         return True
     except Exception as e:
         print(f"Analytical Engine Pipeline failed: {e}")
