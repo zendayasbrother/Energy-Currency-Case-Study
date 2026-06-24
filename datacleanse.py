@@ -100,28 +100,22 @@ class DataCleaner:
             return
         try:
             with self.engine.begin() as conn:
-                temp_name = f"{self.name}_temp" # staging table for later upsert (update or insert) command
-                self.df.to_sql(temp_name, con=conn, schema='Trade Intelligence', if_exists="replace", index=False)
-                
-                upsert_sql = f"""
-                    INSERT INTO "Trade Intelligence".{self.name} 
-                    SELECT * FROM "Trade Intelligence".{temp_name}
-                    ON CONFLICT (period, partnercode) -- Set your actual PKs here
-                    DO UPDATE SET 
-                        primaryvalue = EXCLUDED.primaryvalue,
-                        qty = EXCLUDED.qty;
-                    DROP TABLE "Trade Intelligence".{temp_name};"""
-                    
-                conn.execute(text(upsert_sql))
-            print(f"Success: Upsert completed for {self.name}")
+                self.df.to_sql(
+                    name=self.name, 
+                    con=conn, 
+                    schema='Trade Intelligence', 
+                    if_exists="replace", 
+                    index=False
+                )
+            print(f"Success: Table '{self.name}' written to database.")
         except Exception as e:
-            print(f"CRITICAL ERROR during database upsert: {e}")
+            print(f"CRITICAL ERROR during database load: {e}")
 
 class Fetcher(): 
     def __init__(self, db_path):
         self.db_path = db_path
         self.engine = create_engine(db_path) if db_path else None
-        self.name = "Currency_Stability"  
+        self.name = "currency_stability"  
         self.df = pd.DataFrame()
 
         
@@ -203,21 +197,16 @@ class Fetcher():
             return
         try:
             with self.engine.begin() as conn:
-                temp_name = f"{self.name}_temp"
-                self.df.to_sql(temp_name, con=conn, schema='Trade Intelligence', if_exists="replace", index=False)
-                
-                upsert_sql = f"""
-                    INSERT INTO "Trade Intelligence".{self.name} 
-                    SELECT * FROM "Trade Intelligence".{temp_name}
-                    ON CONFLICT (period, country_code) -- Match your PK
-                    DO UPDATE SET 
-                        exports_to_chn = EXCLUDED.exports_to_chn;
-                    DROP TABLE "Trade Intelligence".{temp_name};
-                """
-                conn.execute(text(upsert_sql))
-            print(f"Success: Upsert completed for {self.name}")
+                self.df.to_sql(
+                    name = self.name, 
+                    con = conn, 
+                    schema='Trade Intelligence', 
+                    if_exists="replace", 
+                    index=False
+                )
+            print(f"Success: Table '{self.name}' written to database.")
         except Exception as e:
-            print(f"CRITICAL ERROR during database upsert: {e}")
+            print(f"CRITICAL ERROR during database load: {e}")
             
             
     # MOVE THIRD SYNCING MATRIX CLASS HERE FROM ENGINE
