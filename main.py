@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from datacleanse import DataCleaner, Fetcher
 from dotenv import load_dotenv
@@ -33,12 +34,16 @@ def trilateral_analysis():
         engine.sync_matrix(countries)
         engine.run_stats()
         engine.run_corr()
+        return True
     except Exception as e:
         print(f"Analytical Engine Pipeline failed: {e}")
-
+        return False
 
 def run_swat():
-    trilateral_analysis()
+    success = trilateral_analysis()
+    if not success:
+        print("\nSWAT Fatal: Application dashboard execution halted due to engine synchronization failures.")
+        sys.exit(1)
     print("\nHello, and welcome to SWAT: a computational demonstration of the trilateral relationship of China, Nigeria, and Ghana.")
 
 

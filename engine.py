@@ -23,8 +23,9 @@ class DataEngine:
         self.metadata_cols = [
             'refperiodid', 'refmonth', 'partnercode', 'partner2code', 
             'motcode', 'qtyunitcode', 'altqtyunitcode', 'legacyestimationflag',
-            'year', 'reportercode', 'isqtyestimated', 'isaltqtyestimated',
-            'isnetwgtestimated', 'isgrosswgtestimated', 'isreported', 'isaggregate'
+            'year', 'refyear', 'reportercode', 'period', 'date', 
+            'isqtyestimated', 'isaltqtyestimated', 'isnetwgtestimated', 
+            'isgrosswgtestimated', 'isreported', 'isaggregate'
         ]
     
         
@@ -48,10 +49,7 @@ class DataEngine:
                 values='value', 
                 aggfunc='first'
             ).reset_index()
-
-            country_iso_map = {288: "GHA", 566: "NGA", 156: "CHN"}
-            uncom_df['iso'] = uncom_df['reportercode'].map(country_iso_map)
-
+            
             merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
             
             if merged_df.empty:
@@ -60,25 +58,35 @@ class DataEngine:
             self.df = merged_df
             print(f"-> Matrix synchronized successfully! Matrix shape: {self.df.shape}")
         except Exception as e:
-            print(f"UNCOM or DBnomics Pipeline failed: {e}")
+            raise RuntimeError(f"Data synchronization failed: {e}")
        
     def meta_clean(self): 
         if self.df is None or self.df.empty:
             return pd.DataFrame()
-        self.cleaner.clean_data()
+        df_cleaned = self.df.drop(columns=self.metadata_cols, errors='ignore')
+        df_cleaned = df_cleaned.dropna(axis=1, how='all')
+        df_cleaned = df_cleaned.loc[:, (df_cleaned != 0).any(axis=0)]
+        
+        self.df = df_cleaned
+        return self.df
 
     def run_stats(self):
         print("\nRunning full analysis:")
-        self.df = self.meta_clean()
         if self.df.empty:
             print("Error: No matrix data present inside the engine to analyse.")
             return None
         
-        df = self.df
-        df = df.drop(columns=self.metadata_cols, errors='ignore')
-        print(f"Initial Dimensions: {df.shape}")
-        print("\n--- Data Audit ft. First 10 rows ---")
-        print(df.head())
+        print("\n--- MERGED DATA ft. First 15 rows ---")
+        print(f"Dimensions: {self.df.shape}")
+        print(self.df.head(15))
+        
+        self.meta_clean()
+        
+        df = self.df.copy()
+        metadata = ['typecode', 'freqcode', 'iso']        
+        df = df.drop(columns=metadata, errors='ignore')
+        df = df.select_dtypes(include=[np.number])
+        
         
         print("\n--- Data Types ---")
         print(self.df.dtypes)
@@ -100,13 +108,16 @@ class DataEngine:
         
         if energy_cols:
             print("\n=== UNCOM TRADE CORRELATION ===")
-            print(df[energy_cols].corr())
+            print(df[energy_cols].apply(pd.to_numeric, errors='coerce').corr())
 
         if target_cols and energy_cols:
             print("\n=== DBN MACROECONOMIC CORRELATION ===")
             combined_cols = list(set(energy_cols + target_cols))
-            corr_matrix = df[combined_cols].corr()
+            
+            corr_df = df[combined_cols].apply(pd.to_numeric, errors='coerce')
+            corr_matrix = corr_df.corr()
             print(corr_matrix)
+            
             print(self.speartests())
             return corr_matrix
         return None

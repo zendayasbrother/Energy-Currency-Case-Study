@@ -33,7 +33,10 @@ class DataCleaner:
                     result = response.json()
                     data = result.get("dataset") or result.get("data")
                     if data:
-                        frames.append(pd.json_normalize(data))
+                        df_temp = pd.json_normalize(data)
+                        country_iso_map = {288: "GHA", 566: "NGA", 156: "CHN"}
+                        df_temp['iso'] = country_iso_map.get(country, "UNKNOWN")
+                        frames.append(df_temp)
                         print(f"Successfully fetched {country}")
                     else:
                         print(f"No data found for {country}")
@@ -66,24 +69,28 @@ class DataCleaner:
         return self.df
 
     def clean_data(self):
-
+        print("\n--- Data Audit ft. First 10 rows ---")
+        print(f"Initial Dimensions: {self.df.shape}")
+        print(self.df.head())
+        
+        print("\n--- Data Types ---")
+        print(self.df.dtypes)
+        print(self.df.info())
+        
         numeric_cols = self.df.select_dtypes(include=['number']).columns
         self.df[numeric_cols] = self.df[numeric_cols].fillna(0)
         
         metadata_cols = [
             'refperiodid', 'refmonth', 'partnercode', 'partner2code', 
-            'motcode', 'qtyunitcode', 'altqtyunitcode', 'legacyestimationflag',
-            'year', 'reportercode', 'isqtyestimated', 'isaltqtyestimated',
-            'isnetwgtestimated', 'isgrosswgtestimated', 'isreported', 'isaggregate'
+            'motcode', 'qtyunitcode', 'altqtyunitcode', 'legacyestimationflag'
         ]
         
         self.df = self.df.drop(columns=metadata_cols, errors='ignore')
+        self.df = self.df.dropna(axis=1, how='all')
+        self.df = self.df.loc[:, (self.df != 0).any(axis=0)]
+        print(f"Post Audit and Clean: {self.df.shape}")
         
-        print("\n--- Data Types ---")
-        print(self.df.dtypes)
-        print(self.df.info())
-       
-        print(self.df.describe())
+        return self.df
 
         pass # Sub function for formatting - prints the formatted version via lamda function
 
@@ -149,13 +156,19 @@ class Fetcher():
         
     def clean_data(self):
         print("\n--- Data Audit ft. First 10 rows ---")
-        print(self.df.tail(11))
-        print(self.df.shape)
+        print(f"Initial Dimensions: {self.df.shape}")
+        print(self.df.head())
         
         print("\n--- Data Types ---")
         print(self.df.dtypes)
         print(self.df.info())
-        print(self.df.describe())
+        
+        self.df = self.df.dropna(axis=1, how='all')
+        self.df = self.df.loc[:, (self.df != 0).any(axis=0)]
+    
+        print(f"Post Audit and Clean: {self.df.shape}")
+        
+        return self.df
         
     def standardise_columns(self):
         if self.df is not None and not self.df.empty:
