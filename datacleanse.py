@@ -24,7 +24,7 @@ class DataCleaner:
                 "reporterCode": str(country), 
                 "partnerCode": "0",
                 "period": "2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024",
-                "cmdCode": "854143,271600"
+                "cmdCode": "854143,271600" # solar, electricity
             }
             headers = {"Ocp-Apim-Subscription-Key": self.api_key}
             try:
@@ -33,7 +33,7 @@ class DataCleaner:
                     result = response.json()
                     data = result.get("dataset") or result.get("data")
                     if data:
-                        df_temp = pd.json_normalize(data)
+                        df_temp = pd.json_normalize(data) # flatten the JSON structure
                         country_iso_map = {288: "GHA", 566: "NGA", 156: "CHN"}
                         df_temp['iso'] = country_iso_map.get(country, "UNKNOWN")
                         frames.append(df_temp)
@@ -85,9 +85,9 @@ class DataCleaner:
             'motcode', 'qtyunitcode', 'altqtyunitcode', 'legacyestimationflag'
         ]
         
-        self.df = self.df.drop(columns=metadata_cols, errors='ignore')
-        self.df = self.df.dropna(axis=1, how='all')
-        self.df = self.df.loc[:, (self.df != 0).any(axis=0)]
+        self.df = self.df.drop(columns=metadata_cols, errors='ignore') # removes redundant metadata columns
+        self.df = self.df.dropna(axis=1, how='all') # also drops columns that are entirely NaN
+        self.df = self.df.loc[:, (self.df != 0).any(axis=0)] 
         print(f"Post Audit and Clean: {self.df.shape}")
         
         return self.df
@@ -100,7 +100,7 @@ class DataCleaner:
             return
         try:
             with self.engine.begin() as conn:
-                temp_name = f"{self.name}_temp"
+                temp_name = f"{self.name}_temp" # staging table for later upsert (update or insert) command
                 self.df.to_sql(temp_name, con=conn, schema='Trade Intelligence', if_exists="replace", index=False)
                 
                 upsert_sql = f"""
@@ -129,16 +129,20 @@ class Fetcher():
         print(f"Executing batch ingestion from DB Nomics...")
         try:
             wb_df = fetch_series(provider_code='WB', dataset_code='WDI',
-                dimensions={'frequency': ['A'], 'country': ['GHA', 'NGA', 'CHN'], 'indicator': ['FP.CPI.TOTL.ZG']}
+                dimensions={'frequency': ['A'], # annual
+                            'country': ['GHA', 'NGA', 'CHN'], # country isos
+                            'indicator': ['FP.CPI.TOTL.ZG']} # inflation per consumer price index
             )
             imf_df = fetch_series(provider_code='IMF', dataset_code='IFS',
-                dimensions={'FREQ': ['A'], 'REF_AREA': ['GH', 'NG', 'CN'], 'INDICATOR': ['ENDE_XDC_USD_RATE']}
+                dimensions={'FREQ': ['A'], 
+                            'REF_AREA': ['GH', 'NG', 'CN'], 
+                            'INDICATOR': ['ENDE_XDC_USD_RATE']} # exchange rate in USD
             )
 
             if wb_df.empty and imf_df.empty:
                 raise Exception("DB Nomics returned an empty dataset for both providers.")
                 
-            fetched_df = pd.concat([wb_df, imf_df], ignore_index=True)
+            fetched_df = pd.concat([wb_df, imf_df], ignore_index=True) # sticks into master table
 
             df_cleaned = pd.DataFrame({
                 "period": fetched_df["period"],
@@ -214,6 +218,9 @@ class Fetcher():
             print(f"Success: Upsert completed for {self.name}")
         except Exception as e:
             print(f"CRITICAL ERROR during database upsert: {e}")
+            
+            
+    # MOVE THIRD SYNCING MATRIX CLASS HERE FROM ENGINE
         
     def json_dc(): 
         

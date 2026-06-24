@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=env_path)
 
 
 def trilateral_analysis():
-    print("Initializing API fetch for Trilateral Analysis...")
+    print("Initializing API fetch for Trilateral Analysis...") # functions per file - datacleanse.py
     api_url = os.environ.get("UNCOM_URL")
     api_key = os.environ.get("UNCOM_KEY")
     db_path = os.environ.get("DB_PATH")
@@ -41,12 +41,11 @@ def trilateral_analysis():
         return False
 
 def run_swat():
+    print("\nHello, and welcome to SWAT: a computational demonstration of the trilateral relationship of China, Nigeria, and Ghana.")
     success = trilateral_analysis()
     if not success:
         print("\nSWAT Fatal: Application dashboard execution halted due to engine synchronization failures.")
         sys.exit(1)
-    print("\nHello, and welcome to SWAT: a computational demonstration of the trilateral relationship of China, Nigeria, and Ghana.")
-
 
 if __name__ == "__main__":
     run_swat()

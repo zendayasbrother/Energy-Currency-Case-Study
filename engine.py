@@ -67,7 +67,7 @@ class DataEngine:
         df_cleaned = df_cleaned.loc[:, (df_cleaned != 0).any(axis=0)]
         
         self.df = df_cleaned
-        return self.df
+        return self.df # (move to dc.py)
 
     def run_stats(self):
         print("\nRunning full analysis:")
@@ -130,6 +130,6 @@ class DataEngine:
             val = subset['primaryvalue'].corr(subset['exchange_rate'], method='spearman')
             results[f'\n Spearman - Primary Value vs Inflation ({label})'] = round(float(val), 4)
         
-        # calculations    
-        
         return results
+
+ # calculations    
