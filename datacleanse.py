@@ -101,7 +101,12 @@ class DataCleaner:
         try:
             with self.engine.begin() as conn:
                 schema_name = 'Trade Intelligence'
-                self.df.to_sql(name=self.name, con=conn, schema=schema_name, if_exists="replace", index=False)
+                self.df.to_sql(
+                    name = self.name, 
+                    con = conn, 
+                    schema = schema_name, 
+                    if_exists="replace", 
+                    index=False)
             print(f"Success: Data pushed to {schema_name}.{self.name}")
         except Exception as e:
             print(f"CRITICAL ERROR during database push: {e}")
@@ -201,6 +206,7 @@ class Fetcher():
             print(f"CRITICAL ERROR during database push: {e}")
         
     def json_dc(): 
+        
         {"api_settings": {
             "uncom_base_url": "https://api.comtrade.un.org/v1",
             "cmd_codes": ["854143", "271600"],
