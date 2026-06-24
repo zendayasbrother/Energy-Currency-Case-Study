@@ -1,4 +1,4 @@
-# Ignore environment variables
+# Ignore environment variables+ certain files
 .env
 .venv
 output.txt
