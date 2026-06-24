@@ -1,18 +1,11 @@
 import pandas as pd
 import numpy as np
-from scipy import stats
-import nashpy as nash
 import json
-from sklearn.linear_model import LinearRegression
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
 import warnings
-
-
 warnings.filterwarnings('ignore')
 
 
-# DataEngine is a composition class for orchestrating the math and game theory analysis
+# DataEngine is a composition class for orchestrating the math
 class DataEngine:
     def __init__(self, cleaner, fetcher):
         self.cleaner = cleaner
@@ -116,8 +109,9 @@ class DataEngine:
             corr_df = df[combined_cols].apply(pd.to_numeric, errors='coerce')
             corr_matrix = corr_df.corr()
             print(corr_matrix)
-            
-            print(self.speartests())
+            results = self.speartests()
+            for key, value in results.items():
+                print(f"\n{key}: {value}")
             return corr_matrix
         return None
        
@@ -128,7 +122,7 @@ class DataEngine:
         for label, iso in countries.items():
             subset = self.df[self.df['iso'] == iso]
             val = subset['primaryvalue'].corr(subset['exchange_rate'], method='spearman')
-            results[f'\n Spearman - Primary Value vs Inflation ({label})'] = round(float(val), 4)
+            results[f'Spearman - Primary Value vs Inflation ({label})'] = round(float(val), 4)
         
         return results
 
