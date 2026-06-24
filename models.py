@@ -11,6 +11,10 @@ warnings.filterwarnings('ignore')
 
 # Plots different mathematical demos, and visualises complex relationships 
 
-class ECModel(DataEngine):
+class ECModels(DataEngine):
     def __init__(self, cleaner_ins):
         super().__init__(cleaner_ins)
+        
+        
+    def run_game_theory(self):
+        pass

@@ -12,7 +12,6 @@ load_dotenv(dotenv_path=env_path)
 
 def trilateral_analysis():
     print("Initializing API fetch for Trilateral Analysis...")
-
     api_url = os.environ.get("UNCOM_URL")
     api_key = os.environ.get("UNCOM_KEY")
     db_path = os.environ.get("DB_PATH")

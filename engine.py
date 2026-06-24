@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 import nashpy as nash
-from datacleanse import DataCleaner, Fetcher
 import json
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
@@ -87,7 +86,7 @@ class DataEngine:
         df = df.drop(columns=metadata, errors='ignore')
         df = df.select_dtypes(include=[np.number])
         
-        
+        # add independent HFCE (USD) dataset for engergy-equity calculation
         print("\n--- Data Types ---")
         print(self.df.dtypes)
         print(self.df.info())
@@ -123,18 +122,14 @@ class DataEngine:
         return None
        
     def speartests(self):
-        gha_df = self.df[self.df['iso'] == 'GHA']
-        nga_df = self.df[self.df['iso'] == 'NGA']
-        chn_df = self.df[self.df['iso'] == 'CHN']
-
-        spearman_gha = float(gha_df['primaryvalue'].corr(gha_df['inflation'], method='spearman'))
-        spearman_nga = float(nga_df['primaryvalue'].corr(nga_df['inflation'], method='spearman'))
-        spearman_chn = float(chn_df['primaryvalue'].corr(chn_df['inflation'], method='spearman'))
-
-        return {
-            "Spearman Primary Value vs Inflation (GHA)": round(spearman_gha, 4),
-            "Spearman Primary Value vs Inflation (NGA)": round(spearman_nga, 4),
-            "Spearman Primary Value vs Inflation (CHN)": round(spearman_chn, 4)
-        }
-    def run_game_theory(self):
-        pass
+        countries = {'GHA': 'GHA', 'NGA': 'NGA', 'CHN': 'CHN'}
+        results = {}
+        
+        for label, iso in countries.items():
+            subset = self.df[self.df['iso'] == iso]
+            val = subset['primaryvalue'].corr(subset['exchange_rate'], method='spearman')
+            results[f'\n Spearman - Primary Value vs Inflation ({label})'] = round(float(val), 4)
+        
+        # calculations    
+        
+        return results

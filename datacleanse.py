@@ -123,6 +123,7 @@ class Fetcher():
             imf_df = fetch_series(provider_code='IMF', dataset_code='IFS',
                 dimensions={'FREQ': ['A'], 'REF_AREA': ['GH', 'NG', 'CN'], 'INDICATOR': ['ENDE_XDC_USD_RATE']}
             )
+
             if wb_df.empty and imf_df.empty:
                 raise Exception("DB Nomics returned an empty dataset for both providers.")
                 
@@ -199,4 +200,25 @@ class Fetcher():
         except Exception as e:
             print(f"CRITICAL ERROR during database push: {e}")
         
-    
+    def json_dc(): 
+        {"api_settings": {
+            "uncom_base_url": "https://api.comtrade.un.org/v1",
+            "cmd_codes": ["854143", "271600"],
+            "periods": "2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
+        },
+        
+        "countries": {
+            "reporting": [288, 566, 156],
+            "iso_mapping": {
+            "288": "GHA",
+            "566": "NGA",
+            "156": "CHN"
+            }
+        },
+        
+        "pipeline": {
+            "target_table": "bilateral_trade",
+            "schema": "Trade Intelligence",
+            "clean_nulls": True
+        }
+            }
