@@ -124,6 +124,8 @@ class DataEngine:
             val = subset['primaryvalue'].corr(subset['exchange_rate'], method='spearman')
             results[f'Spearman - Primary Value vs Inflation ({label})'] = round(float(val), 4)
         
-        return results
+        return results # END OF FIRST HALF 
 
  # calculations    
+    def gapcalcs(): 
+        pass

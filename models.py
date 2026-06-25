@@ -19,4 +19,4 @@ class ECModels(DataEngine):
         
         
     def run_game_theory(self):
-        pass
+        pass # Stacklberg model 
