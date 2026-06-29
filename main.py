@@ -45,13 +45,6 @@ def run_swat():
     success = trilateral_analysis()
     if not success:
         print("\nSWAT Fatal: Application dashboard execution halted due to engine synchronization failures.")
-        sys.exit(1)
 
 if __name__ == "__main__":
     run_swat()
-     
-    # 1. PRE-CLEANING RAW DATASET PREVIEW
-    # 2. RUN CLEANING PROCESS
-    # 3. POST-CLEANING PROCESSED DATASET PREVIEW
-    # FORMAT and FINAL REPORT
-   

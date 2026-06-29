@@ -134,6 +134,7 @@ class DataEngine:
                                                                                                                                                 
             val = subset['primaryvalue'].corr(subset['exchange_rate'], method='spearman')
             print(f"Spearman - Primary Value vs Exchange Rate ({iso}): {val:.4f}")
+            results[f'Spearman - Primary Value vs Exchange Rate ({iso}): '] = round(val, 4)
         
         # coefficient variation calculations
             exchange = subset['exchange_rate']
@@ -144,6 +145,7 @@ class DataEngine:
             else:
                 var = (qty_ratio.std() / exchange.mean()) * 100
                 print(f"Coefficient of Variation - Qty Ratio + Exchange Rate ({iso}): {var:.4f}")
+                results[f'Coefficient of Variation - Qty Ratio + Exchange Rate ({iso}): '] = round(var, 4)
 
             
             # elasticity calculations
@@ -153,9 +155,13 @@ class DataEngine:
                 results[f'Elasticity - Quantity vs Inflation ({iso}): '] = None
                 print(f"Warning: Inflation data for {iso} is insufficient for elasticity calculation.")
             else:
-                elast = qty_pct / inflation.pct_change()
-                print(f"Elasticity - Quantity vs Inflation ({iso}): {elast}") # fix elasticity
-    
+                elast = qty_pct / inflation
+                elast = elast.replace([np.inf, -np.inf], np.nan).dropna()
+                elast_final = elast.mean()
+                print(f"Elasticity - Quantity vs Inflation ({iso}): {elast_final}") # fix elasticity
+                results[f'Elasticity - Quantity vs Inflation ({iso}): '] = round(elast_final, 4)
+
+        return results
     # END OF FIRST HALF 
 
  # calculations    

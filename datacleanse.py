@@ -164,6 +164,9 @@ class Fetcher():
             self.clean_data()
             return self.df
         except Exception as e:
+            print(f"DBnomics API Timeout. Loading local fallback...")
+            fetched_df = pd.concat([wb_df, imf_df], ignore_index=True)
+            self.df = fetched_df.to_csv("currency_stability.csv", index=False) # fallback to local CSV
             raise Exception(f"Critical pipeline error: {e}")
         
     def clean_data(self):
