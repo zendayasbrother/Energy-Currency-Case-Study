@@ -15,6 +15,7 @@ class DataCleaner:
         self.name = "bilateral_trade"
         self.df = pd.DataFrame()
         self.countries = countries
+        self.is_from_fallback = False
 
     def fetch_api(self, countries):
         print("Executing API ingestion from UNCOM Trade...")
@@ -50,12 +51,27 @@ class DataCleaner:
             time.sleep(1.1)
 
         if frames:
+            self.is_from_fallback = False
             self.df = pd.concat(frames, ignore_index=True)
             self.standardise_columns()
             self.clean_data()
             return self.df
         else:
-            raise Exception("No data could be retrieved.")
+            try:
+                with self.engine.connect() as conn:
+                    self.df = pd.read_sql_table(
+                        self.name, 
+                        con=conn, 
+                        schema='Trade Intelligence')
+                    if not self.df.empty:
+                        print("Warning: API fetch failed. Using existing database data.")
+                        self.is_from_fallback = True
+                        return self.df
+                    else:
+                        raise Exception("No existing data available in the database.")
+            except Exception as db_e:
+                print(f"Database fetch failed: {db_e}")
+                raise Exception(f"Critical pipeline error: {e}")
     
     def standardise_columns(self):
         if self.df is not None and not self.df.empty:
@@ -118,6 +134,7 @@ class Fetcher():
         self.engine = create_engine(db_path) if db_path else None
         self.name = "currency_stability"  
         self.df = pd.DataFrame()
+        self.is_from_fallback = False
 
         
     def fetch_all(self): 
@@ -159,15 +176,28 @@ class Fetcher():
             df_cleaned.loc[df_cleaned["series_code"].str.contains("CHN|CN"), "iso"] = "CHN"
 
             self.df = df_cleaned
+            self.is_from_fallback = False
             print(f"-> Successfully synchronized series from WB and IMF.")
             self.standardise_columns()
             self.clean_data()
             return self.df
         except Exception as e:
-            print(f"DBnomics API Timeout. Loading local fallback...")
-            fetched_df = pd.concat([wb_df, imf_df], ignore_index=True)
-            self.df = fetched_df.to_csv("currency_stability.csv", index=False) # fallback to local CSV
-            raise Exception(f"Critical pipeline error: {e}")
+            # pull from existing PGSQL database from previous runs if API fails
+            try:
+                with self.engine.connect() as conn:
+                    self.df = pd.read_sql_table(
+                        self.name, 
+                        con=conn, 
+                        schema='Trade Intelligence')
+                    if not self.df.empty:
+                        print("Warning: API fetch failed. Using existing database data.")
+                        self.is_from_fallback = True
+                        return self.df
+                    else:
+                        raise Exception("No existing data available in the database.")
+            except Exception as db_e:
+                print(f"Database fetch failed: {db_e}")
+                raise Exception(f"Critical pipeline error: {e}")
         
     def clean_data(self):
         print("\n--- Data Audit ft. First 10 rows ---")
@@ -201,6 +231,11 @@ class Fetcher():
         if self.df is None or self.df.empty:
             print("No data to push.")
             return
+        
+        if self.is_from_fallback: # assume that the API fetch failed; fallback True
+            print(f"Skipping DB write for '{self.name}' (data loaded from fallback).")
+            return
+        
         try:
             with self.engine.begin() as conn:
                 self.df.to_sql(

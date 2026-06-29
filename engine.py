@@ -26,6 +26,9 @@ class DataEngine:
         try:
             uncom = self.cleaner.fetch_api(countries)
             dbnomics = self.fetcher.fetch_all()
+            
+            self.cleaner.connect_database()
+            self.fetcher.connect_database()
         
             if uncom is None or uncom.empty or dbnomics is None or dbnomics.empty:
                 raise ValueError("Upstream extraction returned empty datasets.")
@@ -115,8 +118,6 @@ class DataEngine:
             corr_matrix = corr_df.corr()
             print(corr_matrix)
             results = self.speartests()
-            for key, value in results.items():
-                print(f"\n{key}: {value}")
             return corr_matrix
         return None
        
