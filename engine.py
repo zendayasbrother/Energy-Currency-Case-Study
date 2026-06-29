@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import scipy.stats as stats
 import json
 import warnings
 warnings.filterwarnings('ignore')
@@ -87,8 +88,8 @@ class DataEngine:
         stats_summary.loc['var'] = df.var(numeric_only=True)
         stats_summary.loc['skew'] = df.skew(numeric_only=True)
         print(stats_summary)
-        return stats_summary    
-           
+        return stats_summary   # individual matrix then combined matrix
+    
     def run_corr(self):
         df = self.meta_clean()
         if df.empty:
@@ -101,9 +102,13 @@ class DataEngine:
         if energy_cols:
             print("\n=== UNCOM TRADE CORRELATION ===")
             print(df[energy_cols].apply(pd.to_numeric, errors='coerce').corr())
+            
+        if target_cols:
+            print("\n=== DBN MACROECONOMIC CORRELATION ===")
+            print(df[target_cols].apply(pd.to_numeric, errors='coerce').corr())
 
         if target_cols and energy_cols:
-            print("\n=== DBN MACROECONOMIC CORRELATION ===")
+            print("\n=== COMBINED CORRELATION MATRIX ===")
             combined_cols = list(set(energy_cols + target_cols))
             
             corr_df = df[combined_cols].apply(pd.to_numeric, errors='coerce')
@@ -116,16 +121,43 @@ class DataEngine:
         return None
        
     def speartests(self):
-        countries = {'GHA': 'GHA', 'NGA': 'NGA', 'CHN': 'CHN'}
-        results = {}
-        
-        for label, iso in countries.items():
-            subset = self.df[self.df['iso'] == iso]
+        grouped = self.df.groupby('iso')
+        self.df['altqty'] = self.df['altqty'].replace(0, float('nan'))
+        self.df['qty_ratio'] = self.df['qty'] / self.df['altqty']
+        results = {} 
+        print("\n--- SPEARMAN CORRELATION & VARIATION TESTS---")
+
+        # highlight the ISO / country code per iteration and derive quantity \
+            
+        for iso, subset in grouped:   
+            print(f"\n--- COUNTRY: {iso} ---")
+                                                                                                                                                
             val = subset['primaryvalue'].corr(subset['exchange_rate'], method='spearman')
-            results[f'Spearman - Primary Value vs Inflation ({label})'] = round(float(val), 4)
+            print(f"Spearman - Primary Value vs Exchange Rate ({iso}): {val:.4f}")
         
-        return results # END OF FIRST HALF 
+        # coefficient variation calculations
+            exchange = subset['exchange_rate']
+            qty_ratio = subset['qty_ratio'] # derived value
+            if exchange.empty:
+                results[f'Coefficient of Variation - Exchange Rate ({iso}): '] = None
+                print(f"Warning: Exchange rate data for {iso} is insufficient for CV calculation.")
+            else:
+                var = (qty_ratio.std() / exchange.mean()) * 100
+                print(f"Coefficient of Variation - Qty Ratio + Exchange Rate ({iso}): {var:.4f}")
+
+            
+            # elasticity calculations
+            inflation = subset['inflation']
+            qty_pct = qty_ratio.pct_change()
+            if inflation.empty or qty_pct.empty or inflation.sum() == 0:
+                results[f'Elasticity - Quantity vs Inflation ({iso}): '] = None
+                print(f"Warning: Inflation data for {iso} is insufficient for elasticity calculation.")
+            else:
+                elast = qty_pct / inflation.pct_change()
+                print(f"Elasticity - Quantity vs Inflation ({iso}): {elast}") # fix elasticity
+    
+    # END OF FIRST HALF 
 
  # calculations    
-    def gapcalcs(): 
+    def gapcalcs(self):
         pass

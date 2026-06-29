@@ -72,6 +72,7 @@ class DataCleaner:
         print("\n--- Data Audit ft. First 10 rows ---")
         print(f"Initial Dimensions: {self.df.shape}")
         print(self.df.head())
+        print(self.df.isnull().sum().reset_index(name = 'Missing Values Counted'))
         
         print("\n--- Data Types ---")
         print(self.df.dtypes)
@@ -127,6 +128,7 @@ class Fetcher():
                             'country': ['GHA', 'NGA', 'CHN'], # country isos
                             'indicator': ['FP.CPI.TOTL.ZG']} # inflation per consumer price index
             )
+            
             imf_df = fetch_series(provider_code='IMF', dataset_code='IFS',
                 dimensions={'FREQ': ['A'], 
                             'REF_AREA': ['GH', 'NG', 'CN'], 
@@ -168,6 +170,7 @@ class Fetcher():
         print("\n--- Data Audit ft. First 10 rows ---")
         print(f"Initial Dimensions: {self.df.shape}")
         print(self.df.head())
+        print(self.df.isnull().sum().reset_index(name = 'Missing Values Counted'))
         
         print("\n--- Data Types ---")
         print(self.df.dtypes)
