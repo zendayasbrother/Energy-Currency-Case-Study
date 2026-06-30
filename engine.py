@@ -118,7 +118,7 @@ class DataEngine:
             corr_matrix = corr_df.corr()
             print(corr_matrix)
             results = self.speartests()
-            return corr_matrix
+            return corr_matrix, results
         return None
        
     def speartests(self):
@@ -159,12 +159,12 @@ class DataEngine:
                 elast = qty_pct / inflation
                 elast = elast.replace([np.inf, -np.inf], np.nan).dropna()
                 elast_final = elast.mean()
-                print(f"Elasticity - Quantity vs Inflation ({iso}): {elast_final}") # fix elasticity
+                print(f"Elasticity - Quantity vs Inflation ({iso}): {elast_final:.4f}") # fix elasticity
                 results[f'Elasticity - Quantity vs Inflation ({iso}): '] = round(elast_final, 4)
 
         return results
     # END OF FIRST HALF 
 
- # calculations    
+ # calculations - Energy Equity Score Gap (consumer spending + energy value(s) as key inds)
     def gapcalcs(self):
         pass

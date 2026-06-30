@@ -14,9 +14,12 @@ warnings.filterwarnings('ignore')
 # Plots different mathematical demos, and visualises complex relationships (game theory)
 
 class ECModels(DataEngine):
-    def __init__(self, cleaner_ins):
-        super().__init__(cleaner_ins)
+    def __init__(self, countries):
+        super().sync_matrix(countries)
         
-        
+    # figure out the most linearly correlated variables, and run a linear regression on them
+    def run_linear_regression(self):
+        pass  # TODO: Implement linear regression analysis on the synchronized data
+    
     def run_game_theory(self):
         pass # Stacklberg model 
