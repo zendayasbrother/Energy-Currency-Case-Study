@@ -46,6 +46,8 @@ class DataEngine:
                 aggfunc='first'
             ).reset_index()
             
+            # add independent HFCE (USD) dataset for energy-equity calculation
+            
             merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
             
             if merged_df.empty:
@@ -83,7 +85,7 @@ class DataEngine:
         df = df.drop(columns=metadata, errors='ignore')
         df = df.select_dtypes(include=[np.number])
         
-        # add independent HFCE (USD) dataset for engergy-equity calculation
+
         print("\n--- Data Types ---")
         print(self.df.dtypes)
         print(self.df.info())
