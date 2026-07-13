@@ -17,9 +17,35 @@ class ECModels(DataEngine):
     def __init__(self, countries):
         super().sync_matrix(countries)
         
-    # figure out the most linearly correlated variables, and run a linear regression on them
     def run_linear_regression(self):
-        pass  # TODO: Implement linear regression analysis on the synchronized data
+        if self.df is None or self.df.empty:
+            return None
+
+        numeric = self.df.select_dtypes(include=[np.number]).replace([np.inf, -np.inf], np.nan)
+        numeric = numeric.dropna(axis=1, how='all')
+        if numeric.shape[1] < 2:
+            return None
+
+        correlations = numeric.corr()
+        np.fill_diagonal(correlations.values, 0)
+        predictor, target = correlations.abs().stack().idxmax()
+        if correlations.loc[predictor, target] == 0:
+            return None
+
+        data = numeric[[predictor, target]].dropna()
+        if len(data) < 2:
+            return None
+
+        model = LinearRegression().fit(data[[predictor]], data[target])
+        return {
+            'predictor': predictor,
+            'target': target,
+            'correlation': correlations.loc[predictor, target],
+            'coefficient': model.coef_[0],
+            'intercept': model.intercept_,
+            'r_squared': model.score(data[[predictor]], data[target]),
+            'model': model,
+        }
     
     def run_game_theory(self):
         pass # Stacklberg model 

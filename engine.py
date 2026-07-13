@@ -102,7 +102,7 @@ class DataEngine:
             return None
        
         energy_cols = [c for c in df.columns if any(x in c for x in ['primaryvalue', 'qty', 'fobvalue', 'cifvalue'])]
-        macro_cols = ['inflation', 'exchange_rate', 'household_exp']
+        macro_cols = ['inflation', 'exchange_rate', 'hfce']
         target_cols = [col for col in macro_cols if col in df.columns]
         
         if energy_cols:
@@ -164,6 +164,11 @@ class DataEngine:
                 elast_final = elast.mean()
                 print(f"Elasticity - Quantity vs Inflation ({iso}): {elast_final:.4f}") # fix elasticity
                 results[f'Elasticity - Quantity vs Inflation ({iso}): '] = round(elast_final, 4)
+            
+            # HFCE AND INFLATION ELASTICITY
+            hfce = subset['hfce']
+            pass
+            
 
         return results
     # END OF FIRST HALF 

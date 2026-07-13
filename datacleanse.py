@@ -169,10 +169,18 @@ class Fetcher():
                 "series_code": fetched_df["series_code"],
             })
 
-            df_cleaned["type"] = df_cleaned["series_code"].apply(
-                lambda x: "inflation" if "FP.CPI" in str(x) else "exchange_rate"
-            )
-            
+            def assign_type(series_code):
+                series_str = str(series_code)
+                if "FP.CPI" in series_str:
+                    return "inflation"
+                elif "NE.CON" in series_str:
+                    return "hfce"
+                elif "ENDE_XDC" in series_str:
+                    return "exchange_rate"
+                return "unknown"
+
+            df_cleaned["type"] = df_cleaned["series_code"].apply(assign_type)
+                        
             df_cleaned["year"] = pd.to_datetime(df_cleaned["period"]).dt.year
             df_cleaned = df_cleaned[df_cleaned["year"].between(2014, 2024)]
             
