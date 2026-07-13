@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from datacleanse import DataCleaner, Fetcher
 import scipy.stats as stats
 import json
 import warnings
@@ -46,7 +47,7 @@ class DataEngine:
                 aggfunc='first'
             ).reset_index()
             
-            # add independent HFCE (USD) dataset for energy-equity calculation
+
             
             merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
             
@@ -74,9 +75,9 @@ class DataEngine:
             print("Error: No matrix data present inside the engine to analyse.")
             return None
         
-        print("\n--- MERGED DATA ft. First 15 rows ---")
+        print("\n--- MERGED DATA ft. First 20 rows ---")
         print(f"Dimensions: {self.df.shape}")
-        print(self.df.head(15))
+        print(self.df.head(20))
         
         self.meta_clean()
         
@@ -101,7 +102,7 @@ class DataEngine:
             return None
        
         energy_cols = [c for c in df.columns if any(x in c for x in ['primaryvalue', 'qty', 'fobvalue', 'cifvalue'])]
-        macro_cols = ['inflation', 'exchange_rate']
+        macro_cols = ['inflation', 'exchange_rate', 'household_exp']
         target_cols = [col for col in macro_cols if col in df.columns]
         
         if energy_cols:

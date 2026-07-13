@@ -151,11 +151,17 @@ class Fetcher():
                             'REF_AREA': ['GH', 'NG', 'CN'], 
                             'INDICATOR': ['ENDE_XDC_USD_RATE']} # exchange rate in USD
             )
+            
+            # add independent HFCE (USD) dataset for energy-equity calculation
+            hcfe_df = fetch_series(provider_code='WB', dataset_code='WDI',
+                dimensions={'frequency': ['A'], 
+                            'country': ['GHA', 'NGA', 'CHN'], 
+                            'indicator': ['NE.CON.PRVT.CD']} # household consumption expenditure (current USD)
+            )
 
-            if wb_df.empty and imf_df.empty:
-                raise Exception("DB Nomics returned an empty dataset for both providers.")
-                
-            fetched_df = pd.concat([wb_df, imf_df], ignore_index=True) # sticks into master table
+            if wb_df.empty and imf_df.empty and hcfe_df.empty:
+                raise Exception("DB Nomics returned an empty dataset for all providers.")
+            fetched_df = pd.concat([wb_df, imf_df, hcfe_df], ignore_index=True) # sticks into master table
 
             df_cleaned = pd.DataFrame({
                 "period": fetched_df["period"],
@@ -170,14 +176,14 @@ class Fetcher():
             df_cleaned["year"] = pd.to_datetime(df_cleaned["period"]).dt.year
             df_cleaned = df_cleaned[df_cleaned["year"].between(2014, 2024)]
             
-            df_cleaned["iso"] = "UNKNOWN"
+            df_cleaned["iso"] = "UNKNOWN" # for loop?
             df_cleaned.loc[df_cleaned["series_code"].str.contains("GHA|GH"), "iso"] = "GHA"
             df_cleaned.loc[df_cleaned["series_code"].str.contains("NGA|NG"), "iso"] = "NGA"
             df_cleaned.loc[df_cleaned["series_code"].str.contains("CHN|CN"), "iso"] = "CHN"
 
             self.df = df_cleaned
             self.is_from_fallback = False
-            print(f"-> Successfully synchronized series from WB and IMF.")
+            print(f"-> Successfully synchronized series from WB, IMF, and HCFE.")
             self.standardise_columns()
             self.clean_data()
             return self.df
@@ -203,7 +209,7 @@ class Fetcher():
         print("\n--- Data Audit ft. First 10 rows ---")
         print(f"Initial Dimensions: {self.df.shape}")
         print(self.df.head())
-        print(self.df.isnull().sum().reset_index(name = 'Missing Values Counted'))
+        print(self.df.isnull().sum().reset_index(name = 'Missing Values Counted')) # extend a little
         
         print("\n--- Data Types ---")
         print(self.df.dtypes)
@@ -248,9 +254,7 @@ class Fetcher():
             print(f"Success: Table '{self.name}' written to database.")
         except Exception as e:
             print(f"CRITICAL ERROR during database load: {e}")
-            
-            
-    # MOVE THIRD SYNCING MATRIX CLASS HERE FROM ENGINE
+        
     
     # UPDATE JSON function    
     def json_dc(): 
