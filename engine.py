@@ -47,7 +47,8 @@ class DataEngine:
                 aggfunc='first'
             ).reset_index()
             
-
+            # predict Nigeria's HFCE for 2022-2024 using linear regression based on available data
+            
             
             merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
             

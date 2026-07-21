@@ -4,6 +4,7 @@ from pathlib import Path
 from datacleanse import DataCleaner, Fetcher
 from dotenv import load_dotenv
 from engine import DataEngine
+from models import ECModels
 
 base_path = Path(__file__).resolve().parent
 env_path = base_path / ".env"
@@ -39,13 +40,19 @@ def trilateral_analysis():
         return False
 
 def model_analysis():
-    pass # Placeholder for future model and mathematical analysis implementation
+    countries = [288, 566, 156]
+    models = ECModels(countries)
+    models.run_linear_regression() # Placeholder for future model and mathematical analysis implementation
 
 def run_swat():
     print("\nHello, and welcome to SWAT: a computational demonstration of the trilateral relationship of China, Nigeria, and Ghana.")
     success = trilateral_analysis()
     if not success:
         print("\nSWAT Fatal: Application dashboard execution halted due to engine synchronization failures.")
+
+    frame = model_analysis()
+    if not frame: 
+        print("\nSWAT Fatal: Application dashboard execution halted due to model analysis failures.")
 
 if __name__ == "__main__":
     run_swat()

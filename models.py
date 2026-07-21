@@ -4,6 +4,7 @@ import numpy as np
 import json
 from scipy import stats
 import nashpy as nash
+from engine import DataEngine
 from sklearn.linear_model import LinearRegression 
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
@@ -13,9 +14,10 @@ warnings.filterwarnings('ignore')
 
 # Plots different mathematical demos, and visualises complex relationships (game theory)
 
-class ECModels(DataEngine):
+class ECModels():
     def __init__(self, countries):
-        super().sync_matrix(countries)
+        engine = DataEngine(cleaner=None, fetcher=None)  # Placeholder for cleaner and fetcher#
+        self.df = engine.sync_matrix(countries)  # Synchronize the matrix for the specified countries
         
     def run_linear_regression(self):
         if self.df is None or self.df.empty:
