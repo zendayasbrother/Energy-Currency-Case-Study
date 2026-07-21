@@ -18,6 +18,10 @@ class ECModels():
     def __init__(self, countries):
         engine = DataEngine(cleaner=None, fetcher=None)  # Placeholder for cleaner and fetcher#
         self.df = engine.sync_matrix(countries)  # Synchronize the matrix for the specified countries
+        if hasattr(engine_df, 'df'):
+            engine_df = self.df
+        else:
+            self.df = engine_df.df
         
     def run_linear_regression(self):
         if self.df is None or self.df.empty:

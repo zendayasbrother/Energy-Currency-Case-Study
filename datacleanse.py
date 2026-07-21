@@ -164,7 +164,7 @@ class Fetcher():
                 }
             )
 
-            # 2. Convert raw values in DBnomics to standard format (if needed)
+    
             hfce_df['type'] = 'hfce'
             hfce_df['year'] = pd.to_datetime(hfce_df['period']).dt.year
 
@@ -251,6 +251,8 @@ class Fetcher():
         
         self.df = self.df.dropna(axis=1, how='all')
         self.df = self.df.loc[:, (self.df != 0).any(axis=0)]
+        
+        
     
         print(f"Post Audit and Clean: {self.df.shape}")
         
