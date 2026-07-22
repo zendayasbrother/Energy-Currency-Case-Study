@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from datacleanse import DataCleaner, Fetcher
 import scipy.stats as stats
+from sklearn.linear_model import LinearRegression
 import json
 import warnings
 warnings.filterwarnings('ignore')
@@ -39,7 +40,7 @@ class DataEngine:
             
             dbnomics_df = dbnomics.copy()
             dbnomics_df['year'] = dbnomics_df['year'].astype(int)
-
+            
             db_pivot = dbnomics_df.pivot_table(
                 index=['year', 'iso'], 
                 columns='type', 
@@ -48,7 +49,30 @@ class DataEngine:
             ).reset_index()
             
             # predict Nigeria's HFCE for 2022-2024 using linear regression based on available data
+            predictor_cols = ['exchange_rate', 'inflation']
+            for col in predictor_cols:
+                if col in db_pivot.columns:
+                    db_pivot[col] = db_pivot.groupby('iso')[col].transform(lambda g: g.ffill().bfill())
+                    
+                    
+            nga_mask = db_pivot['iso'] == 'NGA'
+            train_mask = nga_mask & db_pivot['hfce'].notna()
+            pred_mask = nga_mask & db_pivot['hfce'].isna()
+
+            # Train OLS model using exchange_rate and inflation as predictors
+            features = ['exchange_rate', 'inflation']
             
+            if train_mask.sum() > 0 and pred_mask.sum() > 0:
+                X_train = db_pivot.loc[train_mask, features]
+                y_train = db_pivot.loc[train_mask, 'hfce']
+                X_pred = db_pivot.loc[pred_mask, features]
+
+                # Fit OLS Regression
+                model = LinearRegression()
+                model.fit(X_train, y_train)
+
+                # Impute predicted HFCE values into db_pivot for 2022–2024
+                db_pivot.loc[pred_mask, 'hfce'] = model.predict(X_pred)
             
             merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
             

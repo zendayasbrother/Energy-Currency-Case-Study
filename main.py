@@ -4,6 +4,7 @@ from pathlib import Path
 from datacleanse import DataCleaner, Fetcher
 from dotenv import load_dotenv
 from engine import DataEngine
+import engine
 from models import ECModels
 
 base_path = Path(__file__).resolve().parent
@@ -34,14 +35,16 @@ def trilateral_analysis():
         engine.sync_matrix(countries)
         engine.run_stats()
         engine.run_corr()
-        return True
+        return engine
     except Exception as e:
         print(f"Analytical Engine Pipeline failed: {e}")
         return False
 
 def model_analysis():
-    countries = [288, 566, 156]
-    models = ECModels(countries)
+    if engine is None or engine.df.empty:
+        print("Model analysis skipped: engine matrix is empty.")
+        return None
+    models = ECModels(engine.df)
     models.run_linear_regression() # Placeholder for future model and mathematical analysis implementation
 
 def run_swat():
