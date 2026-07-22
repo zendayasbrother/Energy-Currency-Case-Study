@@ -168,11 +168,11 @@ class Fetcher():
             hfce_df['type'] = 'hfce'
             hfce_df['year'] = pd.to_datetime(hfce_df['period']).dt.year
 
-            nga_years = list(range(2014, 2022))
+            nga_years = list(range(2014, 20242))
             nga_values_raw = [
                 412e9, 387e9, 330e9, 301e9, 
                 323e9, 354e9, 276e9, 274e9
-            ]  # Imputed values for Nigeria's HFCE in USD (2014-2021)
+            ]  + [np.nan, np.nan, np.nan] # Imputed values for Nigeria's HFCE in USD (2014-2021)
 
             nga_imputed_df = pd.DataFrame({
                 "period": [pd.Timestamp(f"{yr}-01-01") for yr in nga_years],
@@ -207,7 +207,7 @@ class Fetcher():
 
             df_cleaned["type"] = df_cleaned["series_code"].apply(assign_type)
                         
-            df_cleaned["year"] = pd.to_datetime(df_cleaned["period"]).dt.year
+            df_cleaned["year"] = pd.to_datetime(df_cleaned['period'], errors='coerce')
             df_cleaned = df_cleaned[df_cleaned["year"].between(2014, 2024)]
             
             df_cleaned["iso"] = "UNKNOWN" # for loop?

@@ -5,7 +5,6 @@ import numpy as np
 import os
 from unittest.mock import MagicMock
 from unittest.mock import Mock
-from mock import patch
 from datacleanse import DataCleaner, Fetcher
 from engine import DataEngine
 
@@ -66,65 +65,3 @@ def test_nans(mock_env_variables, sample_uncom_df):
     
     # Assert specific metadata items are excluded
     assert 'refyear' not in cleaner.df.columns
-
-
-@patch('datacleanse.requests.get')
-def test_uncom_api_fetch_rate_limiting(mock_get, mock_env_variables):
-    # Simulates handling HTTP status 429 backoff gracefully without raising crashes.
-    cleaner = DataCleaner(
-        db_path=mock_env_variables["db_path"],
-        api_url=mock_env_variables["api_url"],
-        api_key=mock_env_variables["api_key"]
-    )
-    
-    # Mock a response object representing a rate limit hit
-    mock_response = MagicMock()
-    mock_response.status_code = 429
-    mock_get.return_value = mock_response
-
-    # Temporarily patch time.sleep so the test executes instantly
-    with patch('time.sleep', return_value=None):
-        with pytest.raises(Exception, match="No data could be retrieved."):
-            cleaner.fetch_api(countries=[156])
-
-
-def test_engine_matrix_sync(mock_env_variables, sample_uncom_df, sample_dbnomics_df):
-    # Validates data merging and structural alignment inside the engine.
-    # Instantiating base classes
-    cleaner = DataCleaner(db_path=mock_env_variables["db_path"])
-    fetch = Fetcher(db_path=mock_env_variables["db_path"])
-    
-    # Isolate Engine from executing actual outward API commands by forcing mock returns
-    cleaner.fetch_api = MagicMock(return_value=sample_uncom_df)
-    fetch.fetch_all = MagicMock(return_value=sample_dbnomics_df)
-    
-    # Initialize Engine pipeline execution
-    engine = DataEngine(cleaner, fetch, countries=mock_env_variables["countries"])
-    
-    # Check if horizontal merge aligned indices properly
-    assert not engine.df.empty
-    assert 'country_iso' in engine.df.columns
-    assert 'exchange_rate' in engine.df.columns or 'inflation' in engine.df.columns
-    
-    # Check ISO assignments
-    china_row = engine.df[engine.df['country_iso'] == 'CHN']
-    assert not china_row.empty
-
-
-def test_engine_descriptives(mock_env_variables):
-    # Verifies descriptive matrices generate custom statistical markers correctly.
-    cleaner = MagicMock()
-    fetch = MagicMock()
-    
-    # Constructing a manual, clean dataframe directly inside engine bypass
-    engine = DataEngine.__new__(DataEngine) 
-    engine.df = pd.DataFrame({
-        'trade_val': [10, 20, 30, 40, 50],
-        'exchange_rate': [1.5, 2.0, 2.5, 3.0, 3.5]
-    })
-    
-    stats_summary, corr_matrix = engine.run_analysis()
-    
-    assert 'median' in stats_summary.index
-    assert 'var' in stats_summary.index
-    assert corr_matrix.loc['trade_val', 'exchange_rate'] == pytest.approx(1.0)

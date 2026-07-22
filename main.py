@@ -4,7 +4,6 @@ from pathlib import Path
 from datacleanse import DataCleaner, Fetcher
 from dotenv import load_dotenv
 from engine import DataEngine
-import engine
 from models import ECModels
 
 base_path = Path(__file__).resolve().parent
@@ -40,22 +39,27 @@ def trilateral_analysis():
         print(f"Analytical Engine Pipeline failed: {e}")
         return False
 
-def model_analysis():
-    if engine is None or engine.df.empty:
-        print("Model analysis skipped: engine matrix is empty.")
-        return None
-    models = ECModels(engine.df)
-    models.run_linear_regression() # Placeholder for future model and mathematical analysis implementation
+def model_analysis(df):
+    models = ECModels(df)
+    results = models.run_linear_regression() 
+    return results
 
 def run_swat():
     print("\nHello, and welcome to SWAT: a computational demonstration of the trilateral relationship of China, Nigeria, and Ghana.")
-    success = trilateral_analysis()
-    if not success:
+    engine = trilateral_analysis()
+    if not engine:
         print("\nSWAT Fatal: Application dashboard execution halted due to engine synchronization failures.")
+        return
 
-    frame = model_analysis()
+    df = engine.df
+    frame = model_analysis(df)
+    
     if not frame: 
         print("\nSWAT Fatal: Application dashboard execution halted due to model analysis failures.")
+        return
+    else:
+        print("\nSWAT Success: Model analysis completed.")
+        print(f"Target: {frame['target']} | Predictor: {frame['predictor']} | R-Squared: {frame['r_squared']}")
 
 if __name__ == "__main__":
     run_swat()

@@ -53,15 +53,21 @@ class DataEngine:
             for col in predictor_cols:
                 if col in db_pivot.columns:
                     db_pivot[col] = db_pivot.groupby('iso')[col].transform(lambda g: g.ffill().bfill())
-                    
-                    
-            nga_mask = db_pivot['iso'] == 'NGA'
-            train_mask = nga_mask & db_pivot['hfce'].notna()
-            pred_mask = nga_mask & db_pivot['hfce'].isna()
-
-            # Train OLS model using exchange_rate and inflation as predictors
-            features = ['exchange_rate', 'inflation']
+                
+                predictor_cols = ['exchange_rate', 'inflation']
             
+            for col in predictor_cols:
+                if col in db_pivot.columns:
+                    db_pivot[col] = db_pivot.groupby('iso')[col].transform(lambda g: g.ffill().bfill())
+                            
+            # 2. Setup Masks for Nigeria
+            nga_mask = db_pivot['iso'] == 'NGA'
+            train_mask = nga_mask & db_pivot['hfce'].notna() # 2014-2021
+            pred_mask = nga_mask & db_pivot['hfce'].isna()   # 2022-2024
+
+            features = ['exchange_rate', 'inflation']
+
+            # 3. Train and Impute
             if train_mask.sum() > 0 and pred_mask.sum() > 0:
                 X_train = db_pivot.loc[train_mask, features]
                 y_train = db_pivot.loc[train_mask, 'hfce']
@@ -71,19 +77,21 @@ class DataEngine:
                 model = LinearRegression()
                 model.fit(X_train, y_train)
 
-                # Impute predicted HFCE values into db_pivot for 2022–2024
+                # Impute predicted HFCE values directly back into db_pivot for 2022-2024
                 db_pivot.loc[pred_mask, 'hfce'] = model.predict(X_pred)
-            
-            merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
-            
-            if merged_df.empty:
-                raise RuntimeError("Data integrity failure: Inner join yielded 0 rows.")
+                
+                print("Successfully imputed missing 2022-2024 HFCE data using OLS.")
+                
+                merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
+                
+                if merged_df.empty:
+                    raise RuntimeError("Data integrity failure: Inner join yielded 0 rows.")
 
-            self.df = merged_df
-            print(f"-> Matrix synchronized successfully! Matrix shape: {self.df.shape}")
+                self.df = merged_df
+                print(f"-> Matrix synchronized successfully! Matrix shape: {self.df.shape}")
         except Exception as e:
             raise RuntimeError(f"Data synchronization failed: {e}")
-       
+        
     def meta_clean(self): 
         if self.df is None or self.df.empty:
             return pd.DataFrame()
