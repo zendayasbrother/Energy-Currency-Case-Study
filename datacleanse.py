@@ -274,10 +274,10 @@ class Fetcher():
             print("No data to push.")
             return
         
-        if self.is_from_fallback: # assume that the API fetch failed; fallback True
-            print(f"Skipping DB write for '{self.name}' (data loaded from fallback).")
-            return
-
+        if self.is_fallback: # assumes API has failed
+            print(f"Skipping DB-write for '{self.name}' (loaded from fallback)")
+            return
+        
         try:
             with self.engine.begin() as conn:
                 self.df.to_sql(
