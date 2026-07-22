@@ -168,7 +168,7 @@ class Fetcher():
             hfce_df['type'] = 'hfce'
             hfce_df['year'] = pd.to_datetime(hfce_df['period']).dt.year
 
-            nga_years = list(range(2014, 20242))
+            nga_years = list(range(2014, 2025))
             nga_values_raw = [
                 412e9, 387e9, 330e9, 301e9, 
                 323e9, 354e9, 276e9, 274e9
@@ -207,7 +207,7 @@ class Fetcher():
 
             df_cleaned["type"] = df_cleaned["series_code"].apply(assign_type)
                         
-            df_cleaned["year"] = pd.to_datetime(df_cleaned['period'], errors='coerce')
+            df_cleaned["year"] = pd.to_datetime(df_cleaned['period'], errors='coerce').dt.year.astype(int)
             df_cleaned = df_cleaned[df_cleaned["year"].between(2014, 2024)]
             
             df_cleaned["iso"] = "UNKNOWN" # for loop?
@@ -275,9 +275,9 @@ class Fetcher():
             return
         
         if self.is_from_fallback: # assume that the API fetch failed; fallback True
-            print(f"Skipping DB write for '{self.name}' (data loaded from fallback).")
-            return
-        
+            print(f"Skipping DB write for '{self.name}' (data loaded from fallback).")
+            return
+
         try:
             with self.engine.begin() as conn:
                 self.df.to_sql(
