@@ -1,10 +1,16 @@
 // Source - https://stackoverflow.com/a/72556325
 // Posted by JialeDu, modified by community. See post 'Timeline' for change history
 // Retrieved 2026-06-04, License - CC BY-SA 
-
 {
     "version": "0.2.0",
     "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
         
         {
             "name": "Python: Current File",
