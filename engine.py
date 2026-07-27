@@ -158,6 +158,19 @@ class DataEngine:
         return None
        
     def speartests(self):
+        
+        if self.df is None or self.df.empty:
+            return {}
+        
+        if 'altqty' in self.df.columns and 'qty' in self.df.columns:
+            self.df['altqty'] = self.df['altqty'].replace(0, np.nan)
+            self.df['qty_ratio'] = self.df['qty'] / self.df['altqty'] 
+            
+        if 'inflation' in self.df.columns and 'exchange_rate' in self.df.columns:
+            self.df['stability_ratio'] = (
+            self.df['inflation'] / self.df['exchange_rate']
+        )
+        
         grouped = self.df.groupby('iso')
         self.df['altqty'] = self.df['altqty'].replace(0, float('nan'))
         self.df['qty_ratio'] = self.df['qty'] / self.df['altqty']
@@ -199,10 +212,20 @@ class DataEngine:
                 results[f'Elasticity - Quantity vs Inflation ({iso}): '] = round(elast_final, 4)
             
             # Stability Ratio: Inflation : Exchange Rate
-            if not inflation.empty and not exchange.empty:
-                stability_ratio = inflation.sum() / exchange.mean()
-                results[f'Stability Ratio - Inflation : Exchange Rate ({iso}): '] = round(stability_ratio, 4)
-                print(f"Stability Ratio - Inflation : Exchange Rate ({iso}): {stability_ratio:.4f}")
+            if 'stability_ratio' in subset:
+                iso_stability_mean = subset['stability_ratio'].mean()
+
+                if pd.notna(iso_stability_mean):
+                    print(f'Stability Ratio - Inflation : Exchange Rate ({iso}): {iso_stability_mean:.4f}')
+                    results[f'Stability Ratio - Inflation : Exchange Rate ({iso})'] = round(iso_stability_mean, 4)
+                else:
+                    print(f'Warning: Stability Ratio for {iso} contains only NaN values.'
+                    )
+                    results[f'Stability Ratio - Inflation : Exchange Rate ({iso})'] = None
+            else:
+                print(f'Warning: Required columns for Stability Ratio calculation are missing for {iso}.')
+                results[f'Stability Ratio - Inflation : Exchange Rate ({iso})'] = (None)
+                    
 
         return results
     # END OF FIRST HALF 
