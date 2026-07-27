@@ -29,8 +29,15 @@ class ECModels():
             
             
         correlations = numeric.corr()
-        np.fill_diagonal(correlations.values, 0)
+        corr_values = correlations.values.copy()
+        np.fill_diagonal(corr_values, 0)
+
+        # Reconstruct DataFrame with zeroed diagonal
+        correlations = pd.DataFrame(
+        corr_values, index=correlations.index, columns=correlations.columns)
+
         predictor, target = correlations.abs().stack().idxmax()
+
         if correlations.loc[predictor, target] == 0:
             return None
 

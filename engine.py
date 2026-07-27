@@ -198,14 +198,17 @@ class DataEngine:
                 print(f"Elasticity - Quantity vs Inflation ({iso}): {elast_final:.4f}") # fix elasticity
                 results[f'Elasticity - Quantity vs Inflation ({iso}): '] = round(elast_final, 4)
             
-            # HFCE AND INFLATION ELASTICITY
-            hfce = subset['hfce']
-            pass
-            
+            # Stability Ratio: Inflation : Exchange Rate
+            if not inflation.empty and not exchange.empty:
+                stability_ratio = inflation.sum() / exchange.mean()
+                results[f'Stability Ratio - Inflation : Exchange Rate ({iso}): '] = round(stability_ratio, 4)
+                print(f"Stability Ratio - Inflation : Exchange Rate ({iso}): {stability_ratio:.4f}")
 
         return results
     # END OF FIRST HALF 
 
- # calculations - Energy Equity Score Gap (consumer spending + energy value(s) as key inds)
+ # Calculations - guided with Symbolic Regression + OLS
+ 
+ # Energy Equity Score Gap (consumer spending + energy value(s) as key inds)
     def gapcalcs(self):
         pass

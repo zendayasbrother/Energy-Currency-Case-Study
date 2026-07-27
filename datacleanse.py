@@ -5,6 +5,7 @@ import requests
 import json
 import time
 from sqlalchemy import create_engine, text
+from sklearn.linear_model import LinearRegression 
 
 class DataCleaner:
     def __init__(self, db_path=None, api_url=None, api_key=None, countries=None):
@@ -168,22 +169,66 @@ class Fetcher():
             hfce_df['type'] = 'hfce'
             hfce_df['year'] = pd.to_datetime(hfce_df['period']).dt.year
 
+            if "iso" not in hfce_df.columns:
+                hfce_df["iso"] = hfce_df["series_code"].str.split("-").str[-1]
+
             nga_years = list(range(2014, 2025))
             nga_values_raw = [
-                412e9, 387e9, 330e9, 301e9, 
-                323e9, 354e9, 276e9, 274e9
-            ]  + [np.nan, np.nan, np.nan] # Imputed values for Nigeria's HFCE in USD (2014-2021)
+                412e9,
+                387e9,
+                330e9,
+                301e9,
+                323e9,
+                354e9,
+                276e9,
+                274e9,
+            ] + [np.nan, np.nan, np.nan]
 
             nga_imputed_df = pd.DataFrame({
                 "period": [pd.Timestamp(f"{yr}-01-01") for yr in nga_years],
                 "value": nga_values_raw,
                 "series_code": ["A-NE.CON.PRVT.CD-NGA"] * len(nga_years),
                 "type": ["hfce"] * len(nga_years),
-                "year": nga_years,
-                "iso": ["NGA"] * len(nga_years)
+                "year": [int(yr) for yr in nga_years],
+                "iso": ["NGA"] * len(nga_years),
             })
 
+            # Concatenating all 3 countries into a single DataFrame
             hfce_df = pd.concat([hfce_df, nga_imputed_df], ignore_index=True)
+            hfce_df["value"] = pd.to_numeric(hfce_df["value"], errors="coerce")
+
+            # Define Imputation Logic
+            def _fill_group(group):
+                if group["value"].isna().all() or not group["value"].isna().any():
+                    return group
+
+                known = group.dropna(subset=["value"])
+                missing = group[group["value"].isna()]
+
+                if len(known) < 2:
+                    group["value"] = group["value"].ffill().bfill()
+                    return group
+
+                # Fit Model: Year -> Value
+                X_train = known[["year"]].values
+                y_train = known["value"].values
+
+                model = LinearRegression()
+                model.fit(X_train, y_train)
+
+                # Predict missing years (NGA 2022-2024 & CHN 2023)
+                X_miss = missing[["year"]].values
+                predicted = model.predict(X_miss)
+
+                # Assign predictions
+                group.loc[group["value"].isna(), "value"] = predicted
+                return group
+
+            # Apply Imputation GROUPED BY ISO & SERIES_CODE
+            hfce_df = hfce_df.groupby(["iso", "series_code"], group_keys=False).apply(
+                _fill_group
+            )
+            
 
             if wb_df.empty and imf_df.empty and hfce_df.empty:
                 raise Exception("DB Nomics returned an empty dataset for all providers.")
@@ -252,10 +297,8 @@ class Fetcher():
         self.df = self.df.dropna(axis=1, how='all')
         self.df = self.df.loc[:, (self.df != 0).any(axis=0)]
         
-        
     
         print(f"Post Audit and Clean: {self.df.shape}")
-        
         return self.df
         
     def standardise_columns(self):
@@ -269,12 +312,12 @@ class Fetcher():
             )
         return self.df
     
-    def connect_database(self): 
+    def connect_database(self, db_path = None): 
         if self.df is None or self.df.empty:
             print("No data to push.")
             return
         
-        if self.is_fallback: # assumes API has failed
+        if self.is_from_fallback: # assumes API has failed
             print(f"Skipping DB-write for '{self.name}' (loaded from fallback)")
             return
         
