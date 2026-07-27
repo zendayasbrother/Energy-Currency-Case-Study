@@ -211,4 +211,8 @@ class DataEngine:
  
  # Energy Equity Score Gap (consumer spending + energy value(s) as key inds)
     def gapcalcs(self):
-        pass
+        
+        if self.df is None or self.df.empty:
+            return None
+    
+        pass # rename energy codes to label
