@@ -255,10 +255,10 @@ class Fetcher():
             df_cleaned["year"] = pd.to_datetime(df_cleaned['period'], errors='coerce').dt.year.astype(int)
             df_cleaned = df_cleaned[df_cleaned["year"].between(2014, 2024)]
             
-            df_cleaned["iso"] = "UNKNOWN" # for loop?
-            df_cleaned.loc[df_cleaned["series_code"].str.contains("GHA|GH"), "iso"] = "GHA"
-            df_cleaned.loc[df_cleaned["series_code"].str.contains("NGA|NG"), "iso"] = "NGA"
-            df_cleaned.loc[df_cleaned["series_code"].str.contains("CHN|CN"), "iso"] = "CHN"
+            df_cleaned["iso"] = fetched_df.get("iso", "UNKNOWN") 
+            df_cleaned.loc[df_cleaned["series_code"].str.contains("GHA|GH", na=False), "iso"] = "GHA"
+            df_cleaned.loc[df_cleaned["series_code"].str.contains("NGA|NG", na=False), "iso"] = "NGA"
+            df_cleaned.loc[df_cleaned["series_code"].str.contains("CHN|CN", na=False), "iso"] = "CHN"
 
             self.df = df_cleaned
             self.is_from_fallback = False

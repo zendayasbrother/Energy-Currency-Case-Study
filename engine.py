@@ -3,6 +3,7 @@ import numpy as np
 from datacleanse import DataCleaner, Fetcher
 import scipy.stats as stats
 from sklearn.linear_model import LinearRegression
+from gplearn.genetic import SymbolicRegressor
 import json
 import warnings
 warnings.filterwarnings('ignore')
@@ -233,9 +234,45 @@ class DataEngine:
  # Calculations - guided with Symbolic Regression + OLS
  
  # Energy Equity Score Gap (consumer spending + energy value(s) as key inds)
-    def gapcalcs(self):
+    def energy_equity_gap(self):
         
         if self.df is None or self.df.empty:
             return None
     
-        pass # rename energy codes to label
+        features = ['primaryvalue', 'qty_ratio', 'hfce', 'inflation']
+    
+        # Ensure columns exist and drop NaNs
+        valid_df = self.df.dropna(subset=[col for col in features if col in self.df.columns]).copy()
+        if valid_df.empty:
+            return None
+
+        X = valid_df[['primaryvalue', 'hfce']].values
+        y = valid_df['stability_ratio'].values if 'stability_ratio' in valid_df else valid_df['inflation'].values
+
+        # 2. Run Symbolic Regression to derive dynamic formula
+        sr = SymbolicRegressor(
+            population_size=1000,
+            generations=10, # Keep generations low to prevent dashboard lag
+            function_set=['add', 'sub', 'mul', 'div', 'log'],
+            parsimony_coefficient=0.01,
+            random_state=42
+        )
+        sr.fit(X, y)
+
+        # 3. Apply derived SR expression to compute Energy Equity Score
+        valid_df['energy_equity_score'] = sr.predict(X)
+
+        # 4. Compute Trilateral Score Gap (China vs Nigeria/Ghana)
+        chn_score = valid_df[valid_df['iso'] == 'CHN']['energy_equity_score'].mean()
+        nga_score = valid_df[valid_df['iso'] == 'NGA']['energy_equity_score'].mean()
+        gha_score = valid_df[valid_df['iso'] == 'GHA']['energy_equity_score'].mean()
+
+        gap_results = {
+            'SR_Formula': str(sr._program),
+            'CHN_Score': chn_score,
+            'NGA_Score': nga_score,
+            'GHA_Score': gha_score,
+            'China_WestAfrica_Gap': chn_score - np.nanmean([nga_score, gha_score])
+        }
+
+        return gap_results # rename energy codes to label

@@ -14,10 +14,17 @@ warnings.filterwarnings('ignore')
 
 # Plots different mathematical demos, and visualises complex relationships (game theory)
 
-class ECModels():
+class ECModels(DataEngine):
     def __init__(self, df):
         self.df = df
+        super().__init__(cleaner=None, fetcher=None)  # Initialize the parent class with None for cleaner and fetcher
 
+    def run_pca(self):
+        if self.df is None or self.df.empty:
+            return None
+
+        pass
+        
     def run_linear_regression(self):
         if self.df is None or self.df.empty:
             return None
@@ -54,7 +61,10 @@ class ECModels():
             'intercept': model.intercept_,
             'r_squared': model.score(data[[predictor]], data[target]),
             'model': model,
-        }
+        } # add period + metrics predictions accordingly
+        
+    def run_forecasting(self):
+        pass # ARIMA, SARIMA, Prophet, etc.
     
     def run_game_theory(self):
         pass # Stacklberg model 
