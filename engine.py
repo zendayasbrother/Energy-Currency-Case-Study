@@ -98,12 +98,14 @@ class DataEngine:
     def meta_clean(self): 
         if self.df is None or self.df.empty:
             return pd.DataFrame()
-        df_cleaned = self.df.drop(columns=self.metadata_cols, errors='ignore')
-        df_cleaned = df_cleaned.dropna(axis=1, how='all')
-        df_cleaned = df_cleaned.loc[:, (df_cleaned != 0).any(axis=0)]
         
-        self.df = df_cleaned
-        return self.df # (move to dc.py)
+        df_cleaned = self.df.drop(columns=self.metadata_cols, errors='ignore').copy()
+        df_cleaned = df_cleaned.dropna(axis=1, how='all')
+        
+        non_zero_cols = df_cleaned.loc[:, (df_cleaned != 0).any(axis=0)].columns
+        df_cleaned = df_cleaned[non_zero_cols]
+        
+        return df_cleaned  # Return the cleaned subset instead of overwriting self.df
 
     def run_stats(self):
         print("\nRunning full analysis:")

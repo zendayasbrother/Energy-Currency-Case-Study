@@ -13,8 +13,8 @@ warnings.filterwarnings('ignore')
 
 class ECModels(DataEngine):
     def __init__(self, df):
+        super().__init__(cleaner=None, fetcher=None)  
         self.df = df
-        super().__init__(cleaner=None, fetcher=None)  # Initialize parent class safely
 
     def run_pca(self):
         if self.df is None or self.df.empty:
