@@ -4,7 +4,6 @@ import numpy as np
 import json
 from scipy import stats
 import nashpy as nash
-from engine import DataEngine
 from sklearn.linear_model import LinearRegression 
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
@@ -12,59 +11,71 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# Plots different mathematical demos, and visualises complex relationships (game theory)
-
 class ECModels(DataEngine):
     def __init__(self, df):
         self.df = df
-        super().__init__(cleaner=None, fetcher=None)  # Initialize the parent class with None for cleaner and fetcher
+        super().__init__(cleaner=None, fetcher=None)  # Initialize parent class safely
 
     def run_pca(self):
         if self.df is None or self.df.empty:
             return None
-
-        pass
+        # Placeholder for Principal Component Analysis
+        return None
         
     def run_linear_regression(self):
         if self.df is None or self.df.empty:
+            print("Warning: DataFrame is empty for linear regression analysis.")
             return None
 
-        numeric = self.df.select_dtypes(include=[np.number]).replace([np.inf, -np.inf], np.nan)
+        # Force conversion of all columns to numeric to avoid data type mismatch bugs
+        numeric = self.df.apply(pd.to_numeric, errors='coerce')
+        numeric = numeric.select_dtypes(include=[np.number]).replace([np.inf, -np.inf], np.nan)
         numeric = numeric.dropna(axis=1, how='all')
+
         if numeric.shape[1] < 2:
+            print(f"Warning: Insufficient numeric columns ({numeric.shape[1]}) available for regression.")
             return None
             
-            
-        correlations = numeric.corr()
+        # Compute correlation matrix and safely handle NaNs resulting from constant values
+        correlations = numeric.corr().fillna(0)
         corr_values = correlations.values.copy()
         np.fill_diagonal(corr_values, 0)
 
-        # Reconstruct DataFrame with zeroed diagonal
         correlations = pd.DataFrame(
-        corr_values, index=correlations.index, columns=correlations.columns)
+            corr_values, index=correlations.index, columns=correlations.columns
+        )
+
+        if correlations.abs().max().max() == 0:
+            print("Warning: All pairwise correlations are zero or undefined.")
+            return None
 
         predictor, target = correlations.abs().stack().idxmax()
 
         if correlations.loc[predictor, target] == 0:
+            print("Warning: Selected predictor and target correlation is zero.")
             return None
 
+        # Filter out rows with missing values for the selected predictor-target pair
         data = numeric[[predictor, target]].dropna()
         if len(data) < 2:
+            print(f"Warning: Insufficient matching data rows ({len(data)}) for pair: {predictor} vs {target}.")
             return None
 
+        # Fit the Linear Regression model
         model = LinearRegression().fit(data[[predictor]], data[target])
+        
         return {
             'predictor': predictor,
             'target': target,
-            'correlation': correlations.loc[predictor, target],
-            'coefficient': model.coef_[0],
-            'intercept': model.intercept_,
-            'r_squared': model.score(data[[predictor]], data[target]),
+            'correlation': float(correlations.loc[predictor, target]),
+            'coefficient': float(model.coef_[0]),
+            'intercept': float(model.intercept_),
+            'r_squared': float(model.score(data[[predictor]], data[target])),
             'model': model,
-        } # add period + metrics predictions accordingly
+        }
         
     def run_forecasting(self):
-        pass # ARIMA, SARIMA, Prophet, etc.
+        pass # Placeholder for ARIMA, SARIMA, Prophet, etc.
     
     def run_game_theory(self):
-        pass # Stacklberg model 
+        pass # Placeholder for Stackelberg / Game Theory models

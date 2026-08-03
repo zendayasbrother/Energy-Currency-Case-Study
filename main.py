@@ -42,9 +42,17 @@ def trilateral_analysis():
 def model_analysis(df, engine):
     models = ECModels(df)
     
-    engine.energy_equity_gap()
-    results = models.run_linear_regression() 
-    return engine, results
+    gap_results = engine.energy_equity_gap()
+
+    if gap_results is not None:
+        # Process symbolic regression / equity gap results
+        print("Energy Equity Gap Results:", gap_results)
+    else:
+        print("Notice: Proceeding with remaining linear regression models without Equity Gap analysis.")
+        
+    # Execute the linear regression model to generate the 'frame' data
+    frame = models.run_linear_regression()
+    return engine, frame
 
 def run_swat():
     
@@ -67,3 +75,12 @@ def run_swat():
     else:
         print("\nSWAT Success: Model analysis completed.")
         print(f"Target: {frame['target']} | Predictor: {frame['predictor']} | R-Squared: {frame['r_squared']}")
+        
+if __name__ == "__main__":
+    try:
+        run_swat()
+    except Exception as e:
+        print(f"\nUnhandled Error: {e}")
+    finally:
+        print("\n" + "=" * 50)
+        input("Press [ENTER] to close debugger...")

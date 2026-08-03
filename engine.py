@@ -84,6 +84,8 @@ class DataEngine:
                 print("Successfully imputed missing 2022-2024 HFCE data using OLS.")
                 
             merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
+            if 'hfce' in merged_df.columns: 
+                merged_df['hfce'] = merged_df['hfce'].fillna(merged_df['hfce'].mean())
             
             if merged_df.empty:
                 raise RuntimeError("Data integrity failure: Inner join yielded 0 rows.")
@@ -236,9 +238,10 @@ class DataEngine:
  # Energy Equity Score Gap (consumer spending + energy value(s) as key inds)
     def energy_equity_gap(self):
         
-        if self.df is None or self.df.empty:
+        if self.df is None or self.df.empty or 'hfce' not in self.df.columns:
+            print("Warning: 'hfce' column missing. Skipping Energy Equity Gap analysis.")
             return None
-    
+
         features = ['primaryvalue', 'qty_ratio', 'hfce', 'inflation']
     
         # Ensure columns exist and drop NaNs

@@ -4,6 +4,7 @@ from dbnomics import fetch_series
 import requests
 import json
 import time
+from config import SERIES_MAPPING
 from sqlalchemy import create_engine, text
 from sklearn.linear_model import LinearRegression 
 
@@ -29,26 +30,32 @@ class DataCleaner:
                 "cmdCode": "854143,271600" # solar, electricity
             }
             headers = {"Ocp-Apim-Subscription-Key": self.api_key}
-            try:
-                response = requests.get(self.api_url, params=params, headers=headers)
-                if response.status_code == 200:
-                    result = response.json()
-                    data = result.get("dataset") or result.get("data")
-                    if data:
-                        df_temp = pd.json_normalize(data) # flatten the JSON structure
-                        country_iso_map = {288: "GHA", 566: "NGA", 156: "CHN"}
-                        df_temp['iso'] = country_iso_map.get(country, "UNKNOWN")
-                        frames.append(df_temp)
-                        print(f"Successfully fetched {country}")
+            
+            while True:
+                try:
+                    response = requests.get(self.api_url, params=params, headers=headers)
+                    if response.status_code == 200:
+                        result = response.json()
+                        data = result.get("dataset") or result.get("data")
+                        if data:
+                            df_temp = pd.json_normalize(data) # flatten the JSON structure
+                            country_iso_map = {288: "GHA", 566: "NGA", 156: "CHN"}
+                            df_temp['iso'] = country_iso_map.get(int(country), "UNKNOWN")
+                            frames.append(df_temp)
+                            print(f"Successfully fetched {country}")
+                        else:
+                            print(f"No data found for {country}")
+                        break 
+                    elif response.status_code == 429:
+                        print("Rate limit hit, sleeping...")
+                        time.sleep(5)
+                        continue 
                     else:
-                        print(f"No data found for {country}")
-                elif response.status_code == 429:
-                    print("Rate limit hit, sleeping...")
-                    time.sleep(5)
-                else:
-                    print(f"Error {country}: {response.status_code}")
-            except Exception as e:
-                print(f"Failed {country}: {e}")
+                        print(f"Error {country}: {response.status_code}")
+                        break # Exit retry loop on hard errors
+                except Exception as e:
+                    print(f"Failed {country}: {e}")
+                    break
             time.sleep(1.1)
 
         if frames:
@@ -116,8 +123,14 @@ class DataCleaner:
         if self.df is None or self.df.empty:
             print("No data to push.")
             return
+        
+        active_engine = create_engine(db_path) if db_path else self.engine
+        if not active_engine:
+            print(f"CRITICAL ERROR: No database engine configured for '{self.name}'.")
+            return
+        
         try:
-            with self.engine.begin() as conn:
+            with active_engine.begin() as conn:
                 self.df.to_sql(
                     name=self.name, 
                     con=conn, 
@@ -229,7 +242,6 @@ class Fetcher():
             hfce_df = hfce_df.groupby(["iso", "series_code"], group_keys=False).apply(
                 _fill_group
             )
-            
 
             if wb_df.empty and imf_df.empty and hfce_df.empty:
                 raise Exception("DB Nomics returned an empty dataset for all providers.")
@@ -242,17 +254,18 @@ class Fetcher():
             })
 
             def assign_type(series_code):
-                series_str = str(series_code)
-                if "FP.CPI" in series_str:
-                    return "inflation"
-                elif "NE.CON" in series_str:
-                    return "hfce"
-                elif "ENDE_XDC" in series_str:
-                    return "exchange_rate"
-                return "unknown"
-
+                code_upper = series_code.upper()
+                if 'CPI' in code_upper or 'INFLATION' in code_upper:
+                    return 'inflation'
+                elif 'ENDE_XDC_USD_RATE' in code_upper or 'EXCHANGE' in code_upper:
+                    return 'exchange_rate'
+                elif 'CON' in code_upper or 'HFCE' in code_upper or 'CONSUMPTION' in code_upper:
+                    return 'hfce'
+                else:
+                    return 'unknown'
+                
             df_cleaned["type"] = df_cleaned["series_code"].apply(assign_type)
-                        
+                                    
             df_cleaned["year"] = pd.to_datetime(df_cleaned['period'], errors='coerce').dt.year.astype(int)
             df_cleaned = df_cleaned[df_cleaned["year"].between(2014, 2024)]
             
@@ -294,6 +307,8 @@ class Fetcher():
         print("\n--- Data Types ---")
         print(self.df.dtypes)
         print(self.df.info())
+        # Add this right after fetching DB Nomics data:
+        print("DB Nomics Unique Data Types:", self.df['type'].unique())
         
         self.df = self.df.dropna(axis=1, how='all')
         self.df = self.df.loc[:, (self.df != 0).any(axis=0)]
@@ -318,7 +333,7 @@ class Fetcher():
             print("No data to push.")
             return
         
-        if self.is_from_fallback: # assumes API has failed
+        if getattr(self, 'is_from_fallback', False):
             print(f"Skipping DB-write for '{self.name}' (loaded from fallback)")
             return
         
@@ -336,27 +351,27 @@ class Fetcher():
             print(f"CRITICAL ERROR during database load: {e}")
         
     
-    # UPDATE JSON function    
-    def json_dc(): 
-        
-        {"api_settings": {
-            "uncom_base_url": "https://api.comtrade.un.org/v1",
-            "cmd_codes": ["854143", "271600"],
-            "periods": "2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
-        },
-        
-        "countries": {
-            "reporting": [288, 566, 156],
-            "iso_mapping": {
-            "288": "GHA",
-            "566": "NGA",
-            "156": "CHN"
+ 
+    def json_dc(self): 
+        return {
+            "api_settings": {
+                "uncom_base_url": "https://api.comtrade.un.org/v1",
+                "cmd_codes": ["854143", "271600"],
+                "periods": "2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024"
+            },
+            
+            "countries": {
+                "reporting": [288, 566, 156],
+                "iso_mapping": {
+                    "288": "GHA",
+                    "566": "NGA",
+                    "156": "CHN"
+                }
+            },
+            
+            "pipeline": {
+                "target_table": "bilateral_trade",
+                "schema": "Trade Intelligence",
+                "clean_nulls": True
             }
-        },
-        
-        "pipeline": {
-            "target_table": "bilateral_trade",
-            "schema": "Trade Intelligence",
-            "clean_nulls": True
         }
-            }
