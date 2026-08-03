@@ -42,30 +42,30 @@ class DataEngine:
             dbnomics_df = dbnomics.copy()
             dbnomics_df['year'] = dbnomics_df['year'].astype(int)
             
+            # In engine.py inside sync_matrix():
+
             db_pivot = dbnomics_df.pivot_table(
                 index=['year', 'iso'], 
                 columns='type', 
                 values='value', 
                 aggfunc='first'
             ).reset_index()
-            
-            # predict Nigeria's HFCE for 2022-2024 using linear regression based on available data
+
+            # GUARD: Guarantee required macro columns exist in db_pivot
+            for required_col in ['exchange_rate', 'inflation', 'hfce']:
+                if required_col not in db_pivot.columns:
+                    db_pivot[required_col] = np.nan
+
+            # Forward/backward fill exchange_rate and inflation per ISO
             predictor_cols = ['exchange_rate', 'inflation']
             for col in predictor_cols:
-                if col in db_pivot.columns:
-                    db_pivot[col] = db_pivot.groupby('iso')[col].transform(lambda g: g.ffill().bfill())
-                
-                predictor_cols = ['exchange_rate', 'inflation']
-            
-            for col in predictor_cols:
-                if col in db_pivot.columns:
-                    db_pivot[col] = db_pivot.groupby('iso')[col].transform(lambda g: g.ffill().bfill())
-                            
-            # 2. Setup Masks for Nigeria
+                db_pivot[col] = db_pivot.groupby('iso')[col].transform(lambda g: g.ffill().bfill())
+
+            # Masks for Nigeria HFCE OLS Imputation
             nga_mask = db_pivot['iso'] == 'NGA'
             train_mask = nga_mask & db_pivot['hfce'].notna() # 2014-2021
             pred_mask = nga_mask & db_pivot['hfce'].isna()   # 2022-2024
-
+            
             features = ['exchange_rate', 'inflation']
 
             # 3. Train and Impute

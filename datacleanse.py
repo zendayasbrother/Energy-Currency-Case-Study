@@ -165,8 +165,9 @@ class Fetcher():
                 }
             )
 
-    
             hfce_df['type'] = 'hfce'
+            if 'series_code' not in hfce_df.columns or hfce_df['series_code'].isna().any():
+                hfce_df['series_code'] = hfce_df['series_code'].fillna('A-NE.CON.PRVT.CD-HFCE')
             hfce_df['year'] = pd.to_datetime(hfce_df['period']).dt.year
 
             if "iso" not in hfce_df.columns:

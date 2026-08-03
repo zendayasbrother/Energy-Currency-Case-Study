@@ -34,15 +34,17 @@ def trilateral_analysis():
         engine.sync_matrix(countries)
         engine.run_stats()
         engine.run_corr()
-        return engine
+        return engine, cleaner, fetcher
     except Exception as e:
         print(f"Analytical Engine Pipeline failed: {e}")
         return False
 
-def model_analysis(df):
+def model_analysis(df, engine):
     models = ECModels(df)
+    
+    engine.energy_equity_gap()
     results = models.run_linear_regression() 
-    return results
+    return engine, results
 
 def run_swat():
     print("\nHello, and welcome to SWAT: a computational demonstration of the trilateral relationship of China, Nigeria, and Ghana.")
@@ -52,7 +54,7 @@ def run_swat():
         return
 
     df = engine.df
-    frame = model_analysis(df)
+    engine, frame = model_analysis(df, engine)
     
     if not frame: 
         print("\nSWAT Fatal: Application dashboard execution halted due to model analysis failures.")
