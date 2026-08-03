@@ -47,21 +47,23 @@ def model_analysis(df, engine):
     return engine, results
 
 def run_swat():
+    
     print("\nHello, and welcome to SWAT: a computational demonstration of the trilateral relationship of China, Nigeria, and Ghana.")
-    engine = trilateral_analysis()
-    if not engine:
+    
+    result = trilateral_analysis()
+    if not result:
         print("\nSWAT Fatal: Application dashboard execution halted due to engine synchronization failures.")
         return
 
+    # Unpack the tuple returned by trilateral_analysis()
+    engine, cleaner, fetcher = result
+
     df = engine.df
     engine, frame = model_analysis(df, engine)
-    
+
     if not frame: 
         print("\nSWAT Fatal: Application dashboard execution halted due to model analysis failures.")
         return
     else:
         print("\nSWAT Success: Model analysis completed.")
         print(f"Target: {frame['target']} | Predictor: {frame['predictor']} | R-Squared: {frame['r_squared']}")
-
-if __name__ == "__main__":
-    run_swat()

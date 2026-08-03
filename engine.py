@@ -83,13 +83,13 @@ class DataEngine:
                 
                 print("Successfully imputed missing 2022-2024 HFCE data using OLS.")
                 
-                merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
-                
-                if merged_df.empty:
-                    raise RuntimeError("Data integrity failure: Inner join yielded 0 rows.")
+            merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
+            
+            if merged_df.empty:
+                raise RuntimeError("Data integrity failure: Inner join yielded 0 rows.")
 
-                self.df = merged_df
-                print(f"-> Matrix synchronized successfully! Matrix shape: {self.df.shape}")
+            self.df = merged_df
+            print(f"-> Matrix synchronized successfully! Matrix shape: {self.df.shape}")
         except Exception as e:
             raise RuntimeError(f"Data synchronization failed: {e}")
         
