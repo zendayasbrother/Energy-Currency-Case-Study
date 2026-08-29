@@ -209,8 +209,11 @@ class Fetcher():
                 "iso": ["NGA"] * len(nga_years),
             })
             
-            nga_imputed_df["source"] = "Nigeria manual input"
-            nga_imputed_df["is_imputed"] = nga_imputed_df["value"].isna()
+            # Nigeria's supplied HFCE baseline is sourced from Trading Economics.
+            # All Nigeria HFCE observations are marked as imputed by project choice;
+            # the missing 2022-2024 values are subsequently estimated by OLS in engine.py.
+            nga_imputed_df["source"] = "Trading Economics"
+            nga_imputed_df["is_imputed"] = True
 
             # Concatenating all 3 countries into a single DataFrame
             hfce_df = pd.concat([hfce_df, nga_imputed_df], ignore_index=True)
@@ -251,6 +254,10 @@ class Fetcher():
             df_cleaned.loc[df_cleaned["series_code"].str.contains("GHA|GH", na=False), "iso"] = "GHA"
             df_cleaned.loc[df_cleaned["series_code"].str.contains("NGA|NG", na=False), "iso"] = "NGA"
             df_cleaned.loc[df_cleaned["series_code"].str.contains("CHN|CN", na=False), "iso"] = "CHN"
+
+            # China 2023 HFCE is intentionally retained as an unresolved blank.
+            chn_hfce_mask = df_cleaned["series_code"].eq("A-NE.CON.PRVT.CD-CHN")
+            df_cleaned.loc[chn_hfce_mask, "is_imputed"] = False
             
             invalid_rows = (
                 df_cleaned["series_code"].isna() | df_cleaned["type"].eq("unknown") | df_cleaned["iso"].eq("UNKNOWN")

@@ -97,7 +97,7 @@ class DataEngine:
                     & self.fetcher.df['year'].isin(predicted_hfce.index)
                 )
 
-                self.fetcher.df.loc[predicted_row_mask, 'source'] = 'OLS estimate'
+                self.fetcher.df.loc[predicted_row_mask, 'source'] = 'Trading Economics (OLS estimate)'
                 self.fetcher.df.loc[predicted_row_mask, 'is_imputed'] = True
                 
                 print("Successfully imputed missing 2022-2024 HFCE data using OLS.")
