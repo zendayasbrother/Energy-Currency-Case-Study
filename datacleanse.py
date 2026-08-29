@@ -180,6 +180,8 @@ class Fetcher():
                 if not frame.empty:
                     frame['iso'] = iso
                     frame['series_code'] = f'A-NE.CON.PRVT.CD-{iso}'
+                    frame['source'] = 'World Bank WDI'
+                    frame['is_imputed'] = False
                     hfce_frames.append(frame)
 
             hfce_df = pd.concat(hfce_frames, ignore_index=True)
@@ -206,43 +208,16 @@ class Fetcher():
                 "year": [int(yr) for yr in nga_years],
                 "iso": ["NGA"] * len(nga_years),
             })
+            
+            nga_imputed_df["source"] = "Nigeria manual input"
+            nga_imputed_df["is_imputed"] = nga_imputed_df["value"].isna()
 
             # Concatenating all 3 countries into a single DataFrame
             hfce_df = pd.concat([hfce_df, nga_imputed_df], ignore_index=True)
             hfce_df["series_code"] = "A-NE.CON.PRVT.CD-" + hfce_df["iso"]
             hfce_df["value"] = pd.to_numeric(hfce_df["value"], errors="coerce")
 
-            # Define Imputation Logic
-            def _fill_group(group):
-                if group["value"].isna().all() or not group["value"].isna().any():
-                    return group
-
-                known = group.dropna(subset=["value"])
-                missing = group[group["value"].isna()]
-
-                if len(known) < 2:
-                    group["value"] = group["value"].ffill().bfill()
-                    return group
-
-                # Fit Model: Year -> Value
-                X_train = known[["year"]].values
-                y_train = known["value"].values
-
-                model = LinearRegression()
-                model.fit(X_train, y_train)
-
-                # Predict missing years (NGA 2022-2024 & CHN 2023)
-                X_miss = missing[["year"]].values
-                predicted = model.predict(X_miss)
-
-                # Assign predictions
-                group.loc[group["value"].isna(), "value"] = predicted
-                return group
-
-            # Apply Imputation GROUPED BY ISO & SERIES_CODE
-            hfce_df = hfce_df.groupby(["iso", "series_code"], group_keys=False).apply(
-                _fill_group
-            )
+            
 
             if wb_df.empty and imf_df.empty and hfce_df.empty:
                 raise Exception("DB Nomics returned an empty dataset for all providers.")
@@ -252,6 +227,8 @@ class Fetcher():
                 "period": fetched_df["period"],
                 "value": pd.to_numeric(fetched_df["value"], errors="coerce"),
                 "series_code": fetched_df["series_code"],
+                "source": fetched_df["source"],
+                "is_imputed": fetched_df["is_imputed"]
             })
 
             def assign_type(series_code):
@@ -274,6 +251,19 @@ class Fetcher():
             df_cleaned.loc[df_cleaned["series_code"].str.contains("GHA|GH", na=False), "iso"] = "GHA"
             df_cleaned.loc[df_cleaned["series_code"].str.contains("NGA|NG", na=False), "iso"] = "NGA"
             df_cleaned.loc[df_cleaned["series_code"].str.contains("CHN|CN", na=False), "iso"] = "CHN"
+            
+            invalid_rows = (
+                df_cleaned["series_code"].isna() | df_cleaned["type"].eq("unknown") | df_cleaned["iso"].eq("UNKNOWN")
+            )
+
+            if invalid_rows.any():
+                bad_rows = df_cleaned.loc[
+                    invalid_rows,
+                    ["period", "value", "series_code", "type", "iso"]
+                ]
+                raise ValueError(
+                    f"Invalid macro-series mapping. Refusing to write unknown rows:\n{bad_rows}"
+                )
 
             self.df = df_cleaned
             self.is_from_fallback = False

@@ -31,7 +31,6 @@ class DataEngine:
             dbnomics = self.fetcher.fetch_all()
             
             self.cleaner.connect_database()
-            self.fetcher.connect_database()
         
             if uncom is None or uncom.empty or dbnomics is None or dbnomics.empty:
                 raise ValueError("Upstream extraction returned empty datasets.")
@@ -80,8 +79,30 @@ class DataEngine:
 
                 # Impute predicted HFCE values directly back into db_pivot for 2022-2024
                 db_pivot.loc[pred_mask, 'hfce'] = model.predict(X_pred)
+
+                # Persist the modelled Nigerian HFCE values in the ETL dataframe
+                # that Fetcher.connect_database() writes to currency_stability.
+                predicted_hfce = db_pivot.loc[pred_mask].set_index('year')['hfce']
+                source_mask = (
+                    self.fetcher.df['iso'].eq('NGA')
+                    & self.fetcher.df['type'].eq('hfce')
+                )
+                self.fetcher.df.loc[source_mask, 'value'] = (
+                    self.fetcher.df.loc[source_mask, 'year'].map(predicted_hfce)
+                    .fillna(self.fetcher.df.loc[source_mask, 'value'])
+                )
+                
+                predicted_row_mask = (
+                    source_mask
+                    & self.fetcher.df['year'].isin(predicted_hfce.index)
+                )
+
+                self.fetcher.df.loc[predicted_row_mask, 'source'] = 'OLS estimate'
+                self.fetcher.df.loc[predicted_row_mask, 'is_imputed'] = True
                 
                 print("Successfully imputed missing 2022-2024 HFCE data using OLS.")
+
+            self.fetcher.connect_database()
                 
             merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
             if 'hfce' in merged_df.columns: 
