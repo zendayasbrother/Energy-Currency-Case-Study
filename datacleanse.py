@@ -157,14 +157,30 @@ class Fetcher():
                             'country': ['GHA', 'NGA', 'CHN'], # country isos
                             'indicator': ['FP.CPI.TOTL.ZG']} # inflation per consumer price index
             )
+            for iso in ('GHA', 'NGA', 'CHN'):
+                frame = wb_df
+                if not frame.empty:
+                    frame['iso'] = iso
+                    frame['series_code'] = 'FP.CPI.TOTL.ZG'
+                    frame['source'] = 'World Bank WDI'
+                    frame['is_imputed'] = False
+                    wb_df = pd.concat([wb_df, frame], ignore_index=True)
             
             imf_df = fetch_series(provider_code='IMF', dataset_code='IFS',
                 dimensions={'FREQ': ['A'], 
                             'REF_AREA': ['GH', 'NG', 'CN'], 
                             'INDICATOR': ['ENDE_XDC_USD_RATE']} # exchange rate in USD
             )
+            for iso in ('GH', 'NG', 'CN'):
+                frame = imf_df
+                if not frame.empty:
+                    frame['iso'] = iso
+                    frame['series_code'] = 'ENDE_XDC_USD_RATE'
+                    frame['source'] = 'World Bank WDI'
+                    frame['is_imputed'] = False
+                    wb_df = pd.concat([wb_df, frame], ignore_index=True) # filled the NULL blanks in database with the details
             
-            # add independent HFCE (USD) dataset for energy-equity calculation
+            # added independent HFCE (USD) dataset for energy-equity calculation
 
             hfce_frames = []
             for iso in ('GHA', 'CHN'):
