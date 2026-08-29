@@ -166,23 +166,25 @@ class Fetcher():
             
             # add independent HFCE (USD) dataset for energy-equity calculation
 
-            hfce_df = fetch_series(
-                provider_code='WB', 
-                dataset_code='WDI',
-                dimensions={
-                    'frequency': ['A'], 
-                    'country': ['GHA', 'CHN'], # Exclude NGA from API call to prevent NaN conflicts
-                    'indicator': ['NE.CON.PRVT.CD']
-                }
-            )
+            hfce_frames = []
+            for iso in ('GHA', 'CHN'):
+                frame = fetch_series(
+                    provider_code='WB',
+                    dataset_code='WDI',
+                    dimensions={
+                        'frequency': ['A'],
+                        'country': [iso],
+                        'indicator': ['NE.CON.PRVT.CD']
+                    }
+                )
+                if not frame.empty:
+                    frame['iso'] = iso
+                    frame['series_code'] = f'A-NE.CON.PRVT.CD-{iso}'
+                    hfce_frames.append(frame)
 
+            hfce_df = pd.concat(hfce_frames, ignore_index=True)
             hfce_df['type'] = 'hfce'
-            if 'series_code' not in hfce_df.columns or hfce_df['series_code'].isna().any():
-                hfce_df['series_code'] = hfce_df['series_code'].fillna('A-NE.CON.PRVT.CD-HFCE')
             hfce_df['year'] = pd.to_datetime(hfce_df['period']).dt.year
-
-            if "iso" not in hfce_df.columns:
-                hfce_df["iso"] = hfce_df["series_code"].str.split("-").str[-1]
 
             nga_years = list(range(2014, 2025))
             nga_values_raw = [
