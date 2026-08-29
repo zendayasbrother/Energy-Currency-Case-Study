@@ -6,7 +6,7 @@ import json
 import time
 from config import SERIES_MAPPING
 from sqlalchemy import create_engine, text
-from sklearn.linear_model import LinearRegression 
+from sklearn.linear_model import LinearRegression
 
 class DataCleaner:
     def __init__(self, db_path=None, api_url=None, api_key=None, countries=None):
@@ -117,8 +117,6 @@ class DataCleaner:
         
         return self.df
 
-        pass # Sub function for formatting - prints the formatted version via lamda function
-
     def connect_database(self, db_path = None):
         if self.df is None or self.df.empty:
             print("No data to push.")
@@ -209,6 +207,7 @@ class Fetcher():
 
             # Concatenating all 3 countries into a single DataFrame
             hfce_df = pd.concat([hfce_df, nga_imputed_df], ignore_index=True)
+            hfce_df["series_code"] = "A-NE.CON.PRVT.CD-" + hfce_df["iso"]
             hfce_df["value"] = pd.to_numeric(hfce_df["value"], errors="coerce")
 
             # Define Imputation Logic
