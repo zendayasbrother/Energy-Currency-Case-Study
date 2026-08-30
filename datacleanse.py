@@ -6,7 +6,7 @@ import json
 import time
 from config import SERIES_MAPPING
 from sqlalchemy import create_engine, text
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression 
 
 class DataCleaner:
     def __init__(self, db_path=None, api_url=None, api_key=None, countries=None):
@@ -117,6 +117,8 @@ class DataCleaner:
         
         return self.df
 
+        pass # Sub function for formatting - prints the formatted version via lamda function
+
     def connect_database(self, db_path = None):
         if self.df is None or self.df.empty:
             print("No data to push.")
@@ -157,52 +159,32 @@ class Fetcher():
                             'country': ['GHA', 'NGA', 'CHN'], # country isos
                             'indicator': ['FP.CPI.TOTL.ZG']} # inflation per consumer price index
             )
-            for iso in ('GHA', 'NGA', 'CHN'):
-                frame = wb_df
-                if not frame.empty:
-                    frame['iso'] = iso
-                    frame['series_code'] = 'FP.CPI.TOTL.ZG'
-                    frame['source'] = 'World Bank WDI'
-                    frame['is_imputed'] = False
-                    wb_df = pd.concat([wb_df, frame], ignore_index=True)
             
             imf_df = fetch_series(provider_code='IMF', dataset_code='IFS',
                 dimensions={'FREQ': ['A'], 
                             'REF_AREA': ['GH', 'NG', 'CN'], 
                             'INDICATOR': ['ENDE_XDC_USD_RATE']} # exchange rate in USD
             )
-            for iso in ('GH', 'NG', 'CN'):
-                frame = imf_df
-                if not frame.empty:
-                    frame['iso'] = iso
-                    frame['series_code'] = 'ENDE_XDC_USD_RATE'
-                    frame['source'] = 'World Bank WDI'
-                    frame['is_imputed'] = False
-                    wb_df = pd.concat([wb_df, frame], ignore_index=True) # filled the NULL blanks in database with the details
             
-            # added independent HFCE (USD) dataset for energy-equity calculation
+            # add independent HFCE (USD) dataset for energy-equity calculation
 
-            hfce_frames = []
-            for iso in ('GHA', 'CHN'):
-                frame = fetch_series(
-                    provider_code='WB',
-                    dataset_code='WDI',
-                    dimensions={
-                        'frequency': ['A'],
-                        'country': [iso],
-                        'indicator': ['NE.CON.PRVT.CD']
-                    }
-                )
-                if not frame.empty:
-                    frame['iso'] = iso
-                    frame['series_code'] = f'A-NE.CON.PRVT.CD-{iso}'
-                    frame['source'] = 'World Bank WDI'
-                    frame['is_imputed'] = False
-                    hfce_frames.append(frame)
+            hfce_df = fetch_series(
+                provider_code='WB', 
+                dataset_code='WDI',
+                dimensions={
+                    'frequency': ['A'], 
+                    'country': ['GHA', 'CHN'], # Exclude NGA from API call to prevent NaN conflicts
+                    'indicator': ['NE.CON.PRVT.CD']
+                }
+            )
 
-            hfce_df = pd.concat(hfce_frames, ignore_index=True)
             hfce_df['type'] = 'hfce'
+            if 'series_code' not in hfce_df.columns or hfce_df['series_code'].isna().any():
+                hfce_df['series_code'] = hfce_df['series_code'].fillna('A-NE.CON.PRVT.CD-HFCE')
             hfce_df['year'] = pd.to_datetime(hfce_df['period']).dt.year
+
+            if "iso" not in hfce_df.columns:
+                hfce_df["iso"] = hfce_df["series_code"].str.split("-").str[-1]
 
             nga_years = list(range(2014, 2025))
             nga_values_raw = [
@@ -224,19 +206,42 @@ class Fetcher():
                 "year": [int(yr) for yr in nga_years],
                 "iso": ["NGA"] * len(nga_years),
             })
-            
-            # Nigeria's supplied HFCE baseline is sourced from Trading Economics.
-            # All Nigeria HFCE observations are marked as imputed by project choice;
-            # the missing 2022-2024 values are subsequently estimated by OLS in engine.py.
-            nga_imputed_df["source"] = "Trading Economics"
-            nga_imputed_df["is_imputed"] = True
 
             # Concatenating all 3 countries into a single DataFrame
             hfce_df = pd.concat([hfce_df, nga_imputed_df], ignore_index=True)
-            hfce_df["series_code"] = "A-NE.CON.PRVT.CD-" + hfce_df["iso"]
             hfce_df["value"] = pd.to_numeric(hfce_df["value"], errors="coerce")
 
-            
+            # Define Imputation Logic
+            def _fill_group(group):
+                if group["value"].isna().all() or not group["value"].isna().any():
+                    return group
+
+                known = group.dropna(subset=["value"])
+                missing = group[group["value"].isna()]
+
+                if len(known) < 2:
+                    group["value"] = group["value"].ffill().bfill()
+                    return group
+
+                # Fit Model: Year -> Value
+                X_train = known[["year"]].values
+                y_train = known["value"].values
+
+                model = LinearRegression()
+                model.fit(X_train, y_train)
+
+                # Predict missing years (NGA 2022-2024 & CHN 2023)
+                X_miss = missing[["year"]].values
+                predicted = model.predict(X_miss)
+
+                # Assign predictions
+                group.loc[group["value"].isna(), "value"] = predicted
+                return group
+
+            # Apply Imputation GROUPED BY ISO & SERIES_CODE
+            hfce_df = hfce_df.groupby(["iso", "series_code"], group_keys=False).apply(
+                _fill_group
+            )
 
             if wb_df.empty and imf_df.empty and hfce_df.empty:
                 raise Exception("DB Nomics returned an empty dataset for all providers.")
@@ -246,8 +251,6 @@ class Fetcher():
                 "period": fetched_df["period"],
                 "value": pd.to_numeric(fetched_df["value"], errors="coerce"),
                 "series_code": fetched_df["series_code"],
-                "source": fetched_df["source"],
-                "is_imputed": fetched_df["is_imputed"]
             })
 
             def assign_type(series_code):
@@ -270,23 +273,6 @@ class Fetcher():
             df_cleaned.loc[df_cleaned["series_code"].str.contains("GHA|GH", na=False), "iso"] = "GHA"
             df_cleaned.loc[df_cleaned["series_code"].str.contains("NGA|NG", na=False), "iso"] = "NGA"
             df_cleaned.loc[df_cleaned["series_code"].str.contains("CHN|CN", na=False), "iso"] = "CHN"
-
-            # China 2023 HFCE is intentionally retained as an unresolved blank.
-            chn_hfce_mask = df_cleaned["series_code"].eq("A-NE.CON.PRVT.CD-CHN")
-            df_cleaned.loc[chn_hfce_mask, "is_imputed"] = False
-            
-            invalid_rows = (
-                df_cleaned["series_code"].isna() | df_cleaned["type"].eq("unknown") | df_cleaned["iso"].eq("UNKNOWN")
-            )
-
-            if invalid_rows.any():
-                bad_rows = df_cleaned.loc[
-                    invalid_rows,
-                    ["period", "value", "series_code", "type", "iso"]
-                ]
-                raise ValueError(
-                    f"Invalid macro-series mapping. Refusing to write unknown rows:\n{bad_rows}"
-                )
 
             self.df = df_cleaned
             self.is_from_fallback = False

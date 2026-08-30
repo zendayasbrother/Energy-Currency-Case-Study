@@ -31,6 +31,7 @@ class DataEngine:
             dbnomics = self.fetcher.fetch_all()
             
             self.cleaner.connect_database()
+            self.fetcher.connect_database()
         
             if uncom is None or uncom.empty or dbnomics is None or dbnomics.empty:
                 raise ValueError("Upstream extraction returned empty datasets.")
@@ -79,30 +80,8 @@ class DataEngine:
 
                 # Impute predicted HFCE values directly back into db_pivot for 2022-2024
                 db_pivot.loc[pred_mask, 'hfce'] = model.predict(X_pred)
-
-                # Persist the modelled Nigerian HFCE values in the ETL dataframe
-                # that Fetcher.connect_database() writes to currency_stability.
-                predicted_hfce = db_pivot.loc[pred_mask].set_index('year')['hfce']
-                source_mask = (
-                    self.fetcher.df['iso'].eq('NGA')
-                    & self.fetcher.df['type'].eq('hfce')
-                )
-                self.fetcher.df.loc[source_mask, 'value'] = (
-                    self.fetcher.df.loc[source_mask, 'year'].map(predicted_hfce)
-                    .fillna(self.fetcher.df.loc[source_mask, 'value'])
-                )
-                
-                predicted_row_mask = (
-                    source_mask
-                    & self.fetcher.df['year'].isin(predicted_hfce.index)
-                )
-
-                self.fetcher.df.loc[predicted_row_mask, 'source'] = 'Trading Economics (OLS estimate)'
-                self.fetcher.df.loc[predicted_row_mask, 'is_imputed'] = True
                 
                 print("Successfully imputed missing 2022-2024 HFCE data using OLS.")
-
-            self.fetcher.connect_database()
                 
             merged_df = pd.merge(uncom_df, db_pivot, on=['year', 'iso'], how='inner')
             if 'hfce' in merged_df.columns: 
@@ -275,4 +254,30 @@ class DataEngine:
         X = valid_df[['primaryvalue', 'hfce']].values
         y = valid_df['stability_ratio'].values if 'stability_ratio' in valid_df else valid_df['inflation'].values
 
-        
+        # 2. Run Symbolic Regression to derive dynamic formula
+        sr = SymbolicRegressor(
+            population_size=1000,
+            generations=10, # Keep generations low to prevent dashboard lag
+            function_set=['add', 'sub', 'mul', 'div', 'log'],
+            parsimony_coefficient=0.01,
+            random_state=42
+        )
+        sr.fit(X, y)
+
+        # 3. Apply derived SR expression to compute Energy Equity Score
+        valid_df['energy_equity_score'] = sr.predict(X)
+
+        # 4. Compute Trilateral Score Gap (China vs Nigeria/Ghana)
+        chn_score = valid_df[valid_df['iso'] == 'CHN']['energy_equity_score'].mean()
+        nga_score = valid_df[valid_df['iso'] == 'NGA']['energy_equity_score'].mean()
+        gha_score = valid_df[valid_df['iso'] == 'GHA']['energy_equity_score'].mean()
+
+        gap_results = {
+            'SR_Formula': str(sr._program),
+            'CHN_Score': chn_score,
+            'NGA_Score': nga_score,
+            'GHA_Score': gha_score,
+            'China_WestAfrica_Gap': chn_score - np.nanmean([nga_score, gha_score])
+        }
+
+        return gap_results # rename energy codes to label
