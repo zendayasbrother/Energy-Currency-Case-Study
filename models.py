@@ -19,7 +19,7 @@ class ECModels(DataEngine):
     def run_pca(self):
         if self.df is None or self.df.empty:
             return None
-        # Placeholder for Principal Component Analysis
+        # Placeholder for Principal Component Analysis based on briding EES gap
         return None
         
     def run_linear_regression(self):

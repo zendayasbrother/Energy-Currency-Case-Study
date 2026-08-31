@@ -244,7 +244,7 @@ class DataEngine:
             print("Warning: 'hfce' column missing. Skipping Energy Equity Gap analysis.")
             return None
 
-        features = ['primaryvalue', 'qty_ratio', 'hfce', 'inflation']
+        features = ['primaryvalue', 'qty_ratio', 'hfce', 'inflation'] # Feature engineering finding detrived HFCE backed formula
     
         # Ensure columns exist and drop NaNs
         valid_df = self.df.dropna(subset=[col for col in features if col in self.df.columns]).copy()
@@ -252,9 +252,9 @@ class DataEngine:
             return None
 
         X = valid_df[['primaryvalue', 'hfce']].values
-        y = valid_df['stability_ratio'].values if 'stability_ratio' in valid_df else valid_df['inflation'].values
+        Y = valid_df['stability_ratio'].values if 'stability_ratio' in valid_df else valid_df['inflation'].values
 
-        # 2. Run Symbolic Regression to derive dynamic formula
+        # Running Symbolic Regression to derive dynamic formula
         sr = SymbolicRegressor(
             population_size=1000,
             generations=10, # Keep generations low to prevent dashboard lag
@@ -262,9 +262,9 @@ class DataEngine:
             parsimony_coefficient=0.01,
             random_state=42
         )
-        sr.fit(X, y)
+        sr.fit(X, Y)
 
-        # 3. Apply derived SR expression to compute Energy Equity Score
+        # Applying derived SR expression to compute Energy Equity Score
         valid_df['energy_equity_score'] = sr.predict(X)
 
         # 4. Compute Trilateral Score Gap (China vs Nigeria/Ghana)
