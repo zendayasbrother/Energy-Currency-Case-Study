@@ -203,7 +203,7 @@ class DataEngine:
                 results[f'Coefficient of Variation - Qty Ratio + Exchange Rate ({iso}): '] = round(var, 4)
 
             
-            # elasticity calculations
+            # elasticity calculations via log-log regression
             inflation = subset['inflation']
             qty_pct = qty_ratio.pct_change()
             if inflation.empty or qty_pct.empty or inflation.sum() == 0:
@@ -213,7 +213,7 @@ class DataEngine:
                 elast = qty_pct / inflation
                 elast = elast.replace([np.inf, -np.inf], np.nan).dropna()
                 elast_final = elast.mean()
-                print(f"Elasticity - Quantity vs Inflation ({iso}): {elast_final:.4f}") # fix elasticity
+                print(f"Elasticity - Quantity vs Inflation ({iso}): {elast_final:.4f}") # fix elasticity with log-log regression
                 results[f'Elasticity - Quantity vs Inflation ({iso}): '] = round(elast_final, 4)
             
             # Stability Ratio: Inflation : Exchange Rate
@@ -259,10 +259,10 @@ class DataEngine:
         # Running Symbolic Regression to derive dynamic formula
         sr = SymbolicRegressor(
             population_size=300, # Keep population size moderate to accommodate to db size x future dashboard lag
-            generations=10, # Generations repeats the evolution process to refine the model
+            generations=350, # Generations repeats the evolution process to refine the model
             max_samples=0.8,
-            function_set=['add', 'sub', 'mul', 'div', 'sqrt'], # operational limits for user experience (+. -, x, /, maybe sqrt. NO LOG)
-            parsimony_coefficient=0.01,
+            function_set=['add', 'sub', 'mul', 'div', 'log'], # operational limits for user experience (+. -, x, /)
+            parsimony_coefficient=0.0001,
             random_state=42 # reproducibility of results  
         )
         sr.fit(X, Y)

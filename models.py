@@ -30,7 +30,8 @@ class ECModels(DataEngine):
         # Force conversion of all columns to numeric to avoid data type mismatch bugs
         numeric = self.df.apply(pd.to_numeric, errors='coerce')
         numeric = numeric.select_dtypes(include=[np.number]).replace([np.inf, -np.inf], np.nan)
-        numeric = numeric.dropna(axis=1, how='all')
+        
+        # removed idxmax() to avoid potential issues with constant columns leading to NaN correlations
 
         if numeric.shape[1] < 2:
             print(f"Warning: Insufficient numeric columns ({numeric.shape[1]}) available for regression.")
