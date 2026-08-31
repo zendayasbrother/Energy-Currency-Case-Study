@@ -243,6 +243,8 @@ class DataEngine:
         if self.df is None or self.df.empty or 'hfce' not in self.df.columns:
             print("Warning: 'hfce' column missing. Skipping Energy Equity Gap analysis.")
             return None
+        
+        
 
         features = ['primaryvalue', 'qty_ratio', 'hfce', 'inflation'] # Feature engineering finding detrived HFCE backed formula
     
@@ -256,11 +258,12 @@ class DataEngine:
 
         # Running Symbolic Regression to derive dynamic formula
         sr = SymbolicRegressor(
-            population_size=1000,
-            generations=10, # Keep generations low to prevent dashboard lag
-            function_set=['add', 'sub', 'mul', 'div', 'log'],
+            population_size=300, # Keep population size moderate to accommodate to db size x future dashboard lag
+            generations=10, # Generations repeats the evolution process to refine the model
+            max_samples=0.8,
+            function_set=['add', 'sub', 'mul', 'div', 'sqrt'], # operational limits for user experience (+. -, x, /, maybe sqrt. NO LOG)
             parsimony_coefficient=0.01,
-            random_state=42
+            random_state=42 # reproducibility of results  
         )
         sr.fit(X, Y)
 
