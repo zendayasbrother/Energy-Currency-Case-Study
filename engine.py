@@ -244,7 +244,7 @@ class DataEngine:
             print("Warning: 'hfce' column missing. Skipping Energy Equity Gap analysis.")
             return None
         
-        
+        # Build actual definitions and the actual EES for SR to reference then derive a formula for
 
         features = ['primaryvalue', 'qty_ratio', 'hfce', 'inflation'] # Feature engineering finding detrived HFCE backed formula
     
