@@ -263,7 +263,7 @@ class DataEngine:
         
         # Ensure columns exist and drop NaNs
         req_cols = active_features + [target_col]
-        valid_df = self.df.dropna(subset=[req_cols]).copy()
+        valid_df = self.df.dropna(subset=req_cols).copy()
         if valid_df.empty:
             print("Warning: No valid data available for Symbolic Regression analysis.")
             return None
