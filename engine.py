@@ -206,13 +206,22 @@ class DataEngine:
             # elasticity calculations via log-log regression
             inflation = subset['inflation']
             qty_pct = qty_ratio.pct_change()
+
             if inflation.empty or qty_pct.empty or inflation.sum() == 0:
                 results[f'Elasticity - Quantity vs Inflation ({iso}): '] = None
                 print(f"Warning: Inflation data for {iso} is insufficient for elasticity calculation.")
             else:
-                elast = qty_pct / inflation
-                elast = elast.replace([np.inf, -np.inf], np.nan).dropna()
-                elast_final = elast.mean()
+                df_log = pd.DataFrame({
+                    'y': np.log(qty_pct + 1), 
+                    'x': np.log(inflation + 1)
+                }).replace([np.inf, -np.inf], np.nan).dropna() # aligned log features and drop invalid/inf rows
+
+                
+                if len(df_log) > 1 and df_log['x'].var() > 0:
+                    elast_final = np.polyfit(df_log['x'], df_log['y'], deg=1)[0] # creates a linear (fit +) regression model and returns the slope (elasticity)
+                else:
+                    elast_final = 0.0 # Calculating true log-log regression slope (OLS) instead of point division
+
                 print(f"Elasticity - Quantity vs Inflation ({iso}): {elast_final:.4f}") # fix elasticity with log-log regression
                 results[f'Elasticity - Quantity vs Inflation ({iso}): '] = round(elast_final, 4)
             
