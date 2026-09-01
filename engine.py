@@ -253,18 +253,23 @@ class DataEngine:
             print("Warning: 'hfce' column missing. Skipping Energy Equity Gap analysis.")
             return None
         
-        # Build actual definitions and the actual EES for SR to reference then derive a formula for
-
+        # Built actual definitions and the actual EES for SR to reference then derive a formula for - the features array below
+        # inflation is used as a fallback target if stability_ratio is not available, ensuring the model can still be trained.
+        
+        target_col = 'stability_ratio' if 'stability_ratio' in self.df.columns else 'inflation' 
+        
         features = ['primaryvalue', 'qty_ratio', 'hfce', 'inflation'] # Feature engineering finding detrived HFCE backed formula
-    
+        active_features = [col for col in features if col in self.df.columns and col != target_col]
+        
         # Ensure columns exist and drop NaNs
-        valid_df = self.df.dropna(subset=[col for col in features if col in self.df.columns]).copy()
+        req_cols = active_features + [target_col]
+        valid_df = self.df.dropna(subset=[req_cols]).copy()
         if valid_df.empty:
+            print("Warning: No valid data available for Symbolic Regression analysis.")
             return None
 
-        X = valid_df[['primaryvalue', 'hfce']].values
-        Y = valid_df['stability_ratio'].values if 'stability_ratio' in valid_df else valid_df['inflation'].values
-
+        X = valid_df[features].values
+        Y = valid_df[target_col].values
         # Running Symbolic Regression to derive dynamic formula
         sr = SymbolicRegressor(
             population_size=300, # Keep population size moderate to accommodate to db size x future dashboard lag
@@ -285,11 +290,11 @@ class DataEngine:
         gha_score = valid_df[valid_df['iso'] == 'GHA']['energy_equity_score'].mean()
 
         gap_results = {
-            'SR_Formula': str(sr._program),
-            'CHN_Score': chn_score,
+            '\n SR_Formula': str(sr._program),
+            '\n CHN_Score': chn_score,
             'NGA_Score': nga_score,
             'GHA_Score': gha_score,
-            'China_WestAfrica_Gap': chn_score - np.nanmean([nga_score, gha_score])
+            '\n China_WestAfrica_Gap': chn_score - np.nanmean([nga_score, gha_score])
         }
 
         return gap_results # rename energy codes to label

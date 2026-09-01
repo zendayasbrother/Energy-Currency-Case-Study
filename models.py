@@ -16,10 +16,18 @@ class ECModels(DataEngine):
         super().__init__(cleaner=None, fetcher=None)  
         self.df = df
 
+        
+        """IMPORTANT: MAKE SURE THE OUTPUT ISN'T:  SWAT Success: Model analysis completed.
+        Target: period | Predictor: refyear | R-Squared: 1.0
+
+        ==================================================
+        Press [ENTER] to close debugger..."""
+
     def run_pca(self):
         if self.df is None or self.df.empty:
             return None
-        # Placeholder for Principal Component Analysis based on briding EES gap
+        
+        # Principal Component Analysis based on briding EES gap
         return None
         
     def run_linear_regression(self):
