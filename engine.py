@@ -271,15 +271,17 @@ class DataEngine:
             print("Warning: No valid data available for Symbolic Regression analysis.")
             return None
 
-        X = valid_df[features].values
+        X = valid_df[active_features].values
         Y = valid_df[target_col].values
+        
         # Running Symbolic Regression to derive dynamic formula
         sr = SymbolicRegressor(
             population_size=300, # Keep population size moderate to accommodate to db size x future dashboard lag
             generations=350, # Generations repeats the evolution process to refine the model
             max_samples=0.8,
+            init_depth=(2,5),        # shorten range of formula depth for ux
             function_set=['add', 'sub', 'mul', 'div', 'log'], # operational limits for user experience (+. -, x, /)
-            parsimony_coefficient=0.0001,
+            parsimony_coefficient=0.005,
             random_state=42 # reproducibility of results  
         )
         sr.fit(X, Y)
@@ -324,7 +326,7 @@ class DataEngine:
             local_dict[f'X{i}'] = sp.Symbol(name)
             
         try:
-            sympy_expr = sp.sympify(raw_str, locals=local_dict)
+            sympy_expr = eval(raw_str, {"__builtins__": None}, local_dict)
             return sympy_expr
         except Exception as e:
             print(f"Error parsing symbolic regression expression: {e}")
