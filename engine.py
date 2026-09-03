@@ -16,6 +16,7 @@ class DataEngine:
         self.cleaner = cleaner
         self.fetcher = fetcher
         self.df = pd.DataFrame()
+        self.feature_names = []
         
         self.metadata_cols = [
             'refperiodid', 'refmonth', 'partnercode', 'partner2code', 
@@ -261,6 +262,7 @@ class DataEngine:
         
         features = ['primaryvalue', 'qty_ratio', 'hfce', 'inflation'] # Feature engineering finding detrived HFCE backed formula
         active_features = [col for col in features if col in self.df.columns and col != target_col]
+        self.feature_names = features
         
         # Ensure columns exist and drop NaNs
         req_cols = active_features + [target_col]
@@ -299,3 +301,31 @@ class DataEngine:
         }
 
         return gap_results # rename energy codes to label
+    
+    def parse_sr(self, sr_expression):
+        # Convert the symbolic regression expression to a string based sympy expression
+        raw_str = str(sr_expression) 
+    
+        # Map gplearn string operators to SymPy mathematical operations
+        local_dict = {
+            'add': lambda a, b: a + b,
+            'sub': lambda a, b: a - b,
+            'mul': lambda a, b: a * b,
+            'div': lambda a, b: a / b,
+            'log': sp.log, # respectively limits till here
+            'sqrt': sp.sqrt,
+            'abs': sp.Abs,
+            'neg': lambda a: -a,
+            'inv': lambda a: 1 / a
+        }
+        
+        # Map indexed variables (X0, X1, ...) to actual dataframe column names
+        for i, name in enumerate(self.feature_names):
+            local_dict[f'X{i}'] = sp.Symbol(name)
+            
+        try:
+            sympy_expr = sp.sympify(raw_str, locals=local_dict)
+            return sympy_expr
+        except Exception as e:
+            print(f"Error parsing symbolic regression expression: {e}")
+            return None
