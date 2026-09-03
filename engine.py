@@ -4,6 +4,7 @@ from datacleanse import DataCleaner, Fetcher
 import scipy.stats as stats
 from sklearn.linear_model import LinearRegression
 from gplearn.genetic import SymbolicRegressor
+import sympy as sp
 import json
 import warnings
 warnings.filterwarnings('ignore')
@@ -290,11 +291,11 @@ class DataEngine:
         gha_score = valid_df[valid_df['iso'] == 'GHA']['energy_equity_score'].mean()
 
         gap_results = {
-            '\n SR_Formula': str(sr._program),
-            '\n CHN_Score': chn_score,
+            'SR_Formula': str(sr._program),
+            'CHN_Score': chn_score,
             'NGA_Score': nga_score,
             'GHA_Score': gha_score,
-            '\n China_WestAfrica_Gap': chn_score - np.nanmean([nga_score, gha_score])
+            'China_WestAfrica_Gap': chn_score - np.nanmean([nga_score, gha_score])
         }
 
         return gap_results # rename energy codes to label
