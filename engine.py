@@ -3,6 +3,7 @@ import numpy as np
 from datacleanse import DataCleaner, Fetcher
 import scipy.stats as stats
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
 from gplearn.genetic import SymbolicRegressor
 import sympy as sp
 import json
@@ -294,15 +295,22 @@ class DataEngine:
         nga_score = valid_df[valid_df['iso'] == 'NGA']['energy_equity_score'].mean()
         gha_score = valid_df[valid_df['iso'] == 'GHA']['energy_equity_score'].mean()
 
+        parsed_sr = self.parse_sr(sr._program)
+        
         gap_results = {
-            'SR_Formula': str(sr._program),
+            'SR_Formula': str(parsed_sr) if parsed_sr is not None else "Parsing failed",
             'CHN_Score': chn_score,
             'NGA_Score': nga_score,
             'GHA_Score': gha_score,
             'China_WestAfrica_Gap': chn_score - np.nanmean([nga_score, gha_score])
         }
+        
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(features) # fit and transformed in accordance to features
 
-        return gap_results # rename energy codes to label
+        df_scaled = pd.DataFrame(X_scaled, columns=features) # converted numpy array back to DataFrame for easier downstream processing and visualization
+
+        return gap_results, df_scaled
     
     def parse_sr(self, sr_expression):
         # Convert the symbolic regression expression to a string based sympy expression

@@ -21,18 +21,26 @@ class ECModels(DataEngine):
         super().__init__(cleaner=None, fetcher=None)  
         self.df = df
 
-        
-        """IMPORTANT: MAKE SURE THE OUTPUT ISN'T:  SWAT Success: Model analysis completed.
-        Target: period | Predictor: refyear | R-Squared: 1.0
-
-        ==================================================
-        Press [ENTER] to close debugger..."""
-
+    
     def run_pca(self):
         if self.df is None or self.df.empty:
             return None
         
         # Principal Component Analysis based on briding EES gap
+        X = self.df.scaled
+        Y = self.df['stability_ratio'] if 'stability_ratio' in self.df.columns else self.df['inflation']
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+        scaler = StandardScaler()
+
+        # Fit on training data AND transform it
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        
+        model = LogisticRegression()
+        model.fit(X_train, Y_train)
+
+        Y_pred = model.predict(X_test)
         
         return None
         
