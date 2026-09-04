@@ -17,7 +17,6 @@ class DataEngine:
         self.cleaner = cleaner
         self.fetcher = fetcher
         self.df = pd.DataFrame()
-        self.feature_names = []
         
         self.metadata_cols = [
             'refperiodid', 'refmonth', 'partnercode', 'partner2code', 
@@ -287,12 +286,14 @@ class DataEngine:
         sr.fit(X, Y)
 
         # Applying derived SR expression to compute Energy Equity Score
-        valid_df['energy_equity_score'] = sr.predict(X)
+        valid_df['stability_score'] = sr.predict(X)
+        
+        # further extend and perform symbolic regression to fully encapsulate Energy Equity rather than Currency Stability Ratio (CSR) as a proxy for EES
 
-        # 4. Compute Trilateral Score Gap (China vs Nigeria/Ghana)
-        chn_score = valid_df[valid_df['iso'] == 'CHN']['energy_equity_score'].mean()
-        nga_score = valid_df[valid_df['iso'] == 'NGA']['energy_equity_score'].mean()
-        gha_score = valid_df[valid_df['iso'] == 'GHA']['energy_equity_score'].mean()
+        # Compute Trilateral Score Gap (China vs Nigeria/Ghana - ESS)
+        chn_score = valid_df[valid_df['iso'] == 'CHN']['stability_score'].mean()
+        nga_score = valid_df[valid_df['iso'] == 'NGA']['stability_score'].mean()
+        gha_score = valid_df[valid_df['iso'] == 'GHA']['stability_score'].mean() # StS will be a placeholder for EES; continue
 
         parsed_sr = self.parse_sr(sr._program)
         
