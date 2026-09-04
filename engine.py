@@ -71,7 +71,7 @@ class DataEngine:
             
             features = ['exchange_rate', 'inflation']
 
-            # 3. Train and Impute
+            # Training and Imputing
             if train_mask.sum() > 0 and pred_mask.sum() > 0:
                 X_train = db_pivot.loc[train_mask, features]
                 y_train = db_pivot.loc[train_mask, 'hfce']

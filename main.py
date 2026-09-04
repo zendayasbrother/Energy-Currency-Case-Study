@@ -51,8 +51,9 @@ def model_analysis(df, engine):
         print("Notice: Proceeding with remaining linear regression models without Equity Gap analysis.")
         
     # Execute the linear regression model to generate the 'frame' data
+    dimension = models.run_pca()
     frame = models.run_linear_regression()
-    return engine, frame
+    return engine, dimension, frame
 
 def run_swat():
     
@@ -67,7 +68,7 @@ def run_swat():
     engine, cleaner, fetcher = result
 
     df = engine.df
-    engine, frame = model_analysis(df, engine)
+    engine, dimension, frame = model_analysis(df, engine)
 
     if not frame: 
         print("\nSWAT Fatal: Application dashboard execution halted due to model analysis failures.")

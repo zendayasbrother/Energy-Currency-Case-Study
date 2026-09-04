@@ -14,9 +14,8 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-class ECModels(DataEngine):
+class ECModels:
     def __init__(self, df, df_scaled=None):
-        super().__init__(cleaner=None, fetcher=None)  
         self.df = df
         self.scaled = df_scaled
 
