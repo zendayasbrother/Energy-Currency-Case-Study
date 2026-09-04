@@ -299,10 +299,10 @@ class DataEngine:
         
         gap_results = {
             'SR_Formula': str(parsed_sr) if parsed_sr is not None else "Parsing failed",
-            'CHN_Score': chn_score,
-            'NGA_Score': nga_score,
-            'GHA_Score': gha_score,
-            'China_WestAfrica_Gap': chn_score - np.nanmean([nga_score, gha_score])
+            'CHN_Score': round(float(chn_score, 4)),
+            'NGA_Score': round(float(nga_score, 4)),
+            'GHA_Score': round(float(gha_score, 4)),
+            'China_WestAfrica_Gap': round(float(chn_score - np.nanmean([nga_score, gha_score]), 5))
         }
         
         scaler = StandardScaler()
