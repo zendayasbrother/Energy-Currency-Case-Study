@@ -263,7 +263,6 @@ class DataEngine:
         
         features = ['primaryvalue', 'qty_ratio', 'hfce', 'inflation'] # Feature engineering finding detrived HFCE backed formula
         active_features = [col for col in features if col in self.df.columns and col != target_col]
-        self.feature_names = features
         
         # Ensure columns exist and drop NaNs
         req_cols = active_features + [target_col]
@@ -299,10 +298,10 @@ class DataEngine:
         
         gap_results = {
             'SR_Formula': str(parsed_sr) if parsed_sr is not None else "Parsing failed",
-            'CHN_Score': round(float(chn_score, 4)),
-            'NGA_Score': round(float(nga_score, 4)),
-            'GHA_Score': round(float(gha_score, 4)),
-            'China_WestAfrica_Gap': round(float(chn_score - np.nanmean([nga_score, gha_score]), 5))
+            'CHN_Score': round(float(chn_score), 4),
+            'NGA_Score': round(float(nga_score), 4),
+            'GHA_Score': round(float(gha_score), 4),
+            'China_WestAfrica_Gap': round(float(chn_score - np.nanmean([nga_score, gha_score])), 5)
         }
         
         scaler = StandardScaler()

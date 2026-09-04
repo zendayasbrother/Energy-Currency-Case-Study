@@ -7,8 +7,6 @@ import nashpy as nash
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import confusion_matrix
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
@@ -17,32 +15,47 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class ECModels(DataEngine):
-    def __init__(self, df):
+    def __init__(self, df, df_scaled=None):
         super().__init__(cleaner=None, fetcher=None)  
         self.df = df
+        self.scaled = df_scaled
 
     
-    def run_pca(self):
+    def run_pca(self, n_components=2):
         if self.df is None or self.df.empty:
             return None
         
+        if self.scaled is None or self.scaled.empty:
+            print("Warning: Scaled DataFrame is empty for PCA analysis.")
+            return None
+        
+        target_col = 'stability_ratio' if 'stability_ratio' in self.df.columns else 'inflation'
+        
         # Principal Component Analysis based on briding EES gap
-        X = self.df.scaled
-        Y = self.df['stability_ratio'] if 'stability_ratio' in self.df.columns else self.df['inflation']
+        X = self.scaled[self.features]
+        Y = self.scaled[target_col]
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
         scaler = StandardScaler()
 
         # Fit on training data AND transform it
+        pca = PCA(n_components=n_components)
         X_train_scaled = scaler.fit_transform(X_train)
         X_test_scaled = scaler.transform(X_test)
         
-        model = LogisticRegression()
-        model.fit(X_train, Y_train)
-
+        model = LinearRegression()
+        model.fit(X_train_scaled, Y_train)
+        
         Y_pred = model.predict(X_test)
         
-        return None
+        results = {
+            'pca_model': pca,
+            'regression_model': model,
+            'components': pca.components_,
+            'explained_variance': pca.explained_variance_ratio_ # rest of results are in the LR func
+        }
+        
+        return results
         
     def run_linear_regression(self):
         if self.df is None or self.df.empty:
