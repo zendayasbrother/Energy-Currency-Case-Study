@@ -15,65 +15,34 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class ECModels:
-    def __init__(self, df, scaled=None):
+    def __init__(self, df, pca_results):
         self.df = df
-        self.scaled = scaled # maybe combine the scaled df with the original df to avoid losing any data during scaling
+        self.pca_results = pca_results
 
         
-    def run_linear_regression(self):
-        if self.df is None or self.df.empty:
-            print("Warning: DataFrame is empty for linear regression analysis.")
-            return None
+    def run_linear_regression(self, target="hfce"):
+        scores = self.pca_results["pca_scores"]
 
-        # Force conversion of all columns to numeric to avoid data type mismatch bugs
-        
-        clean_df = self.df.copy()
-        
-        numeric = clean_df.apply(pd.to_numeric, errors='coerce')
-        numeric = numeric.select_dtypes(include=[np.number]).replace([np.inf, -np.inf], np.nan)
-        
-        # removed idxmax() to avoid potential issues with constant columns leading to NaN correlations
-
-        if numeric.shape[1] < 2:
-            print(f"Warning: Insufficient numeric columns ({numeric.shape[1]}) available for regression.")
-            return None
-            
-        # Compute correlation matrix and safely handle NaNs resulting from constant values
-        correlations = numeric.corr().fillna(0)
-        corr_values = correlations.values.copy()
-        np.fill_diagonal(corr_values, 0)
-
-        correlations = pd.DataFrame(
-            corr_values, index=correlations.index, columns=correlations.columns
+        data = (
+            self.df[[target]]
+            .join(scores, how="inner")
+            .apply(pd.to_numeric, errors="coerce")
+            .dropna()
         )
 
-        if correlations.abs().max().max() == 0:
-            print("Warning: All pairwise correlations are zero or undefined.")
-            return None
+        features = ["PC1"]  # use PC2 only if you have enough observations
+        X = data[features]
+        y = data[target]
 
-        predictor, target = correlations.abs().stack().idxmax()
+        model = LinearRegression().fit(X, y)
 
-        if correlations.loc[predictor, target] == 0:
-            print("Warning: Selected predictor and target correlation is zero.")
-            return None
-
-        # Filter out rows with missing values for the selected predictor-target pair
-        data = numeric[[predictor, target]].dropna()
-        if len(data) < 2:
-            print(f"Warning: Insufficient matching data rows ({len(data)}) for pair: {predictor} vs {target}.")
-            return None
-
-        # Fit the Linear Regression model
-        model = LinearRegression().fit(data[[predictor]], data[target])
-        
         return {
-            'predictor': predictor,
-            'target': target,
-            'correlation': float(correlations.loc[predictor, target]),
-            'coefficient': float(model.coef_[0]),
-            'intercept': float(model.intercept_),
-            'r_squared': float(model.score(data[[predictor]], data[target])),
-            'model': model,
+            "features": features,
+            "target": target,
+            "coefficients": dict(zip(features, model.coef_)),
+            "intercept": float(model.intercept_),
+            "r_squared": float(model.score(X, y)),
+            "model": model,
         }
         
     def run_forecasting(self):

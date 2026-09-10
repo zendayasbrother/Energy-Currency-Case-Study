@@ -238,9 +238,8 @@ class DataEngine:
 class EnergyEquityScore:
     def __init__(self, df):
         self.df = df
-        self.features = [np.log(1 + df['netwgt']), 'inflation', 'exchange_rate', np.log(1 + df['primaryvalue'])] # Store feature names for Symbolic Regression reminiscent weighting
+        self.features = ['netwgt', 'inflation', 'exchange_rate', 'primaryvalue'] # Store feature names for Symbolic Regression reminiscent weighting
         self.feature_names = [col for col in self.features if col in self.df.columns]
-        self.scaled = None
         target_col = None
                     
     
@@ -268,6 +267,10 @@ class EnergyEquityScore:
         
         # Principal Component Analysis based on briding EES gap
         X = valid_df[active_features]
+        
+        X['netwgt'] = np.log1p(X['netwgt'].clip(lower=0))
+        X['primaryvalue'] = np.log1p(X['primaryvalue'].clip(lower=0))
+        
         Y = valid_df[target_col]
 
         # Standardize the data for PCA
@@ -313,7 +316,7 @@ class EnergyEquityScore:
     
     
     def parse_sr(self, sr_expression):
-        # Convert the symbolic regression expression to a string based sympy expression
+        # Convert the symbolic regression like expression to a string based sympy expression
         raw_str = str(sr_expression) 
     
         # Map gplearn string operators to SymPy mathematical operations
@@ -341,4 +344,11 @@ class EnergyEquityScore:
             return None
     
     def json_dc(self): 
-        return { }
+        return { 
+            "pc1": ...,
+            "pc2": ...,
+            "energy_score": ...,
+            "economic_score": ...,
+            "net_ees": ...,
+            "weights": ...
+            } # placeholders
