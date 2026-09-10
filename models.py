@@ -21,7 +21,10 @@ class ECModels:
 
         
     def run_linear_regression(self, target="hfce"):
-        scores = self.pca_results["pca_scores"]
+        scores = pd.DataFrame(
+            {"PC1": np.asarray(self.pca_results["pca_scores"])[:, 0]},
+            index=self.df.index,
+        )
 
         data = (
             self.df[[target]]
@@ -29,6 +32,9 @@ class ECModels:
             .apply(pd.to_numeric, errors="coerce")
             .dropna()
         )
+
+        if len(data) < 2:
+            return None
 
         features = ["PC1"]  # use PC2 only if you have enough observations
         X = data[features]

@@ -268,9 +268,10 @@ class EnergyEquityScore:
         # Principal Component Analysis based on briding EES gap
         X = valid_df[active_features]
         
-        X['netwgt'] = np.log1p(X['netwgt'].clip(lower=0))
-        X['primaryvalue'] = np.log1p(X['primaryvalue'].clip(lower=0))
-        
+        X = valid_df[active_features].copy()
+        for feature in ("netwgt", "primaryvalue"):
+            if feature in X.columns:
+                X[feature] = np.log1p(X[feature].clip(lower=0))        
         Y = valid_df[target_col]
 
         # Standardize the data for PCA
@@ -345,10 +346,9 @@ class EnergyEquityScore:
     
     def json_dc(self): 
         return { 
-            "pc1": ...,
-            "pc2": ...,
-            "energy_score": ...,
-            "economic_score": ...,
-            "net_ees": ...,
-            "weights": ...
-            } # placeholders
+            "pc1": None,
+            "pc2": None,
+            "energy_score": None,
+            "economic_score": None,
+            "net_ees": None,
+            "weights": None            } # placeholders
