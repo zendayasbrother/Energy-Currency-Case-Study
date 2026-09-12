@@ -47,9 +47,9 @@ class ECModels:
             "target": target,
             "coefficients": dict(zip(features, model.coef_)),
             "intercept": float(model.intercept_),
-            "r_squared": float(model.score(X, y)),
+            "r_squared": round(float(model.score(X, y)), 5),
             "model": model,
-        }
+        } # return as variable
         
     def run_forecasting(self):
         pass # Placeholder for ARIMA, SARIMA, Prophet, etc. | train-test split

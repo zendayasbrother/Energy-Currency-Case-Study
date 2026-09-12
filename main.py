@@ -49,8 +49,13 @@ def model_analysis(df, engine):
     
     # Run PCA to reduce dimensions and extract the most significant features
     dimension = equity.run_pca()
+    if dimension is None:
+        print("Error: PCA execution failed or returned no results.")
+        return engine, None, None
     
-    models = ECModels(clean_df, scaled=engine.scaled)
+    pca_results, scaled = dimension
+    
+    models = ECModels(df, pca_results=pca_results)
     frame = models.run_linear_regression()  # Execute the linear regression model to generate the 'frame' data
     return engine, dimension, frame
 
@@ -73,7 +78,7 @@ def run_swat():
         return
     else:
         print("\nSWAT Success: Model analysis completed.")
-        print(f"Target: {frame['target']} | Predictor: {frame['predictor']} | R-Squared: {frame['r_squared']}")
+        print(f"Target: {frame['target']} | Predictor: {frame['features']} | R-Squared: {frame['r_squared']}")
         
 if __name__ == "__main__":
     try:

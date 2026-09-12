@@ -36,4 +36,4 @@ Plotly / Streamlit
       ↓
 Cloudflare Website
 
-Future culmination with a simpler, preceding EDA and Visualisation project into a CLouflare and AWS hostred website via a JSON / API bridge
+Future culmination with a simpler, preceding EDA and Visualisation project into a Clouflare and AWS hostred website via a JSON / API bridge
